@@ -1,18 +1,17 @@
-import csv
+import pandas as pd
+import os
 
 
 def obtener_datos_grafico_sudi():
-    datos = {
-        "x": [],  # area_vidrio
-        "y": [],  # tv
-        "z": []   # yhat
-    }
+    ruta_archivo = os.path.join(os.path.dirname(
+        __file__), "datos_sudi_limpio.csv")
 
-    with open("datos_sudi.txt", newline='', encoding='utf-8') as archivo:
-        lector = csv.DictReader(archivo)
-        for fila in lector:
-            datos["x"].append(float(fila["area_vidrio"]))
-            datos["y"].append(float(fila["tv"]))
-            datos["z"].append(float(fila["yhat"]))
+    df = pd.read_csv(ruta_archivo)
+
+    datos = {
+        "x": df["area_vidrio"].tolist(),
+        "y": df["tv"].tolist(),
+        "z": df["yhat"].tolist(),
+    }
 
     return datos

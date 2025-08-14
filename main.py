@@ -1,6 +1,6 @@
-from graficos import obtener_datos_grafico_sudi
 from fastapi import FastAPI
 from pydantic import BaseModel
+from graficos import obtener_datos_grafico_sudi
 
 app = FastAPI()
 
