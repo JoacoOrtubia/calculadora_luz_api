@@ -1,8 +1,21 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from graficos import obtener_datos_heatmap
 
 app = FastAPI()
+
+# Configuración temporal de CORS (permitir todos los orígenes)
+app.add_middleware(
+    CORSMiddleware,
+    # ⚠️ En producción, reemplazar "*" por el dominio real
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Modelo de entrada
 
 
 class InputData(BaseModel):
@@ -11,6 +24,8 @@ class InputData(BaseModel):
     altura: float
     orientation: str
     tv: float
+
+# Endpoint de cálculo
 
 
 @app.post("/calcular_luz")
