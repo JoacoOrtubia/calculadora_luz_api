@@ -1,3 +1,5 @@
-fastapi
-uvicorn
-pandas
+fastapi==0.110.0
+uvicorn[standard]==0.29.0
+pandas==2.2.1
+numpy==1.26.4
+pydantic==2.6.3
