@@ -1,28 +1,18 @@
-# Imagen base con Python 3.11 (compatible con pandas)
+# Usa una imagen compatible con pandas
 FROM python:3.11-slim
 
-# Setea el directorio de trabajo
+# Define el directorio de trabajo
 WORKDIR /app
 
-# Copia los archivos del proyecto
+# Instala las dependencias
+COPY requirements.txt .
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+# Copia el resto de los archivos
 COPY . .
 
-# Instala dependencias del sistema necesarias para pandas/numpy
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpq-dev \
-    gcc \
-    g++ \
-    git \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Expone el puerto si lo necesitás (opcional)
+EXPOSE 10000
 
-# Instala las dependencias del proyecto
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
-
-# Expone el puerto que usará Uvicorn
-EXPOSE 8000
-
-# Comando de arranque
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Comando por defecto para iniciar la API
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "10000"]
