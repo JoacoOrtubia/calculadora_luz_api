@@ -5,47 +5,40 @@ from typing import Optional, List, Dict, Literal
 import os
 
 from graficos import get_heatmap_data, predict_yhat_nearest
-from model_graph_area import get_model_sheet  # fichas de modelo
+# debes tener este archivo listo con tus gráficos
+from model_graph_area import get_model_sheet
 
-app = FastAPI(title="Calculadora Luz Natural", version="1.2.0")
+app = FastAPI(title="Calculadora Luz Natural", version="1.0.0")
 
-# CORS
-_allowed = os.getenv("ALLOWED_ORIGINS", "*")
-allow_origins = [o.strip() for o in _allowed.split(",")
-                 ] if _allowed != "*" else ["*"]
-
+# Permitir CORS (puede ajustar en producción)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allow_origins,
+    allow_origins=["*"],  # Cambiar por dominio real si se necesita
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
-# Orientaciones válidas
+# Validaciones de orientación
 Orient = Literal["N", "S", "E", "O", "NE", "NO", "SE", "SO"]
 
 
 class InputData(BaseModel):
-    # Datos del recinto (opcionales)
     ancho: Optional[float] = Field(default=None, gt=0)
     largo: Optional[float] = Field(default=None, gt=0)
     altura: Optional[float] = Field(default=None, gt=0)
     orientation: Optional[Orient] = None
 
-    # Ventana
     tv: float = Field(..., ge=0.0, le=1.0,
                       description="Transmitancia visible 0–1")
-    ventana_ancho: Optional[float] = Field(
-        default=None, ge=0.25, le=4.0, description="Ancho ventana en m (0.25–4.0)")
-    ventana_alto: Optional[float] = Field(
-        default=None, ge=0.25, le=3.0, description="Alto ventana en m (0.25–3.0)")
+    ventana_ancho: Optional[float] = Field(default=None, ge=0.25, le=4.0)
+    ventana_alto: Optional[float] = Field(default=None, ge=0.25, le=3.0)
 
     @field_validator("tv")
     @classmethod
-    def _tv_ok(cls, v: float) -> float:
+    def validar_tv(cls, v):
         if v is None:
-            raise ValueError("tv es obligatorio (0–1).")
+            raise ValueError("El campo 'tv' es obligatorio.")
         return v
 
     def area_vidrio(self) -> Optional[float]:
@@ -54,16 +47,15 @@ class InputData(BaseModel):
         return None
 
 
-# ---- helper: mapeo de yhat a porcentajes (ajustable a tus tablas)
-def _metric_percents_from_yhat(v: float) -> dict[str, int]:
-    v = max(0, min(100, v))
+def calcular_metricas_desde_yhat(yhat: float) -> dict[str, int]:
+    y = max(0, min(100, yhat))
     return {
-        "DA": int(v),
-        "UDI": int(min(100, v + 8)),
-        "sDA": int(max(0, v - 13)),
-        "sUDI": int(min(100, v + 4)),
-        "DAv_zone": int(v),
-        "energia": int(max(0, 100 - v)),
+        "DA": int(y),
+        "UDI": int(min(100, y + 8)),
+        "sDA": int(max(0, y - 13)),
+        "sUDI": int(min(100, y + 4)),
+        "DAv_zone": int(y),
+        "energia": int(max(0, 100 - y)),
     }
 
 
@@ -74,36 +66,22 @@ def health():
 
 @app.post("/calcular_luz")
 def calcular_luz(data: InputData):
-    """
-    Respuesta:
-    {
-      ok, mensaje, yhat_pred, punto_usado,
-      heatmap_data: [[area_vidrio,tv,yhat], ...],
-      metrics: [{ key, percent, sheet }, ...],
-      energia_pct
-    }
-    """
-    # Validación extra: área vidrio máximo
     area_v = data.area_vidrio()
     if area_v is not None and area_v > 12.0:
         raise HTTPException(
-            status_code=422,
-            detail="El área de la ventana no puede superar 12 m² (máx. 4×3 m)."
-        )
+            status_code=422, detail="Área de ventana no puede superar 12 m²")
 
-    # 1) Heatmap
     try:
         heatmap = get_heatmap_data()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error cargando CSV: {e}")
 
-    # 2) Predicción puntual
     yhat_pred = None
     punto_usado = None
+
     if area_v is not None:
         try:
-            y, av_used, tv_used = predict_yhat_nearest(area_v, data.tv)
-            yhat_pred = float(y)
+            yhat_pred, av_used, tv_used = predict_yhat_nearest(area_v, data.tv)
             punto_usado = {"area_vidrio": float(av_used), "tv": float(tv_used)}
         except ValueError as e:
             raise HTTPException(status_code=422, detail=str(e))
@@ -111,15 +89,18 @@ def calcular_luz(data: InputData):
             raise HTTPException(
                 status_code=500, detail=f"Error en predicción: {e}")
 
-    # 3) Métricas
-    metrics: List[Dict] = []
-    energia_pct: Optional[int] = None
+    metrics = []
+    energia_pct = None
+
     if yhat_pred is not None:
-        mp = _metric_percents_from_yhat(yhat_pred)
-        for k in ["DA", "UDI", "sDA", "sUDI", "DAv_zone"]:
-            metrics.append(
-                {"key": k, "percent": mp[k], "sheet": get_model_sheet(k)})
-        energia_pct = mp["energia"]
+        metricas = calcular_metricas_desde_yhat(yhat_pred)
+        for key in ["DA", "UDI", "sDA", "sUDI", "DAv_zone"]:
+            metrics.append({
+                "key": key,
+                "percent": metricas[key],
+                "sheet": get_model_sheet(key)
+            })
+        energia_pct = metricas["energia"]
 
     msg = "OK" if yhat_pred is not None else \
         "Heatmap generado. Ingresá medidas de ventana para ver tu predicción."
