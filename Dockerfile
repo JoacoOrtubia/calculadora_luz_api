@@ -1,18 +1,19 @@
-# Usa una imagen compatible con pandas
+# Usa una imagen base de Python estable
 FROM python:3.11-slim
 
-# Define el directorio de trabajo
+# Define el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Instala las dependencias
-COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
+# Copia y instala las dependencias
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Copia el resto de los archivos
+# Copia el resto de los archivos de tu proyecto
 COPY . .
 
-# Expone el puerto si lo necesitás (opcional)
+# Expone el puerto en el que corre tu aplicación
 EXPOSE 10000
 
-# Comando por defecto para iniciar la API
+# Comando para iniciar la API con Uvicorn
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "10000"]
