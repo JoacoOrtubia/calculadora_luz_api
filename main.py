@@ -5,7 +5,6 @@ from typing import Optional, List, Dict, Literal
 import os
 
 from graficos import get_heatmap_data, predict_yhat_nearest
-# debes tener este archivo listo con tus gráficos
 from model_graph_area import get_model_sheet
 
 app = FastAPI(title="Calculadora Luz Natural", version="1.0.0")
@@ -59,6 +58,11 @@ def calcular_metricas_desde_yhat(yhat: float) -> dict[str, int]:
     }
 
 
+@app.get("/")
+def root():
+    return {"message": "Calculadora Luz Natural API", "status": "running", "version": "1.0.0"}
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -95,11 +99,20 @@ def calcular_luz(data: InputData):
     if yhat_pred is not None:
         metricas = calcular_metricas_desde_yhat(yhat_pred)
         for key in ["DA", "UDI", "sDA", "sUDI", "DAv_zone"]:
-            metrics.append({
-                "key": key,
-                "percent": metricas[key],
-                "sheet": get_model_sheet(key)
-            })
+            try:
+                sheet = get_model_sheet(key)
+                metrics.append({
+                    "key": key,
+                    "percent": metricas[key],
+                    "sheet": sheet
+                })
+            except Exception:
+                # Si no encuentra la imagen, continuar sin ella
+                metrics.append({
+                    "key": key,
+                    "percent": metricas[key],
+                    "sheet": {"error": "Imagen no encontrada"}
+                })
         energia_pct = metricas["energia"]
 
     msg = "OK" if yhat_pred is not None else \
@@ -122,3 +135,26 @@ def model_sheet(metric: Literal["DA", "UDI", "sDA", "sUDI", "DAv_zone"] = Query(
         return get_model_sheet(metric)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+# Endpoint adicional para debug
+
+
+@app.get("/debug")
+def debug_info():
+    import os
+    current_dir = os.getcwd()
+    files = os.listdir(current_dir)
+    return {
+        "current_directory": current_dir,
+        "files": files,
+        "csv_exists": os.path.exists("datos_sudi_limpio.csv"),
+        "csv_path": os.path.abspath("datos_sudi_limpio.csv") if os.path.exists("datos_sudi_limpio.csv") else None
+    }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
