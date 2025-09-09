@@ -18,22 +18,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# NUEVO: orientaciones extendidas, según el dropdown del wireframe
-Orient = Literal[
-    "Norte", "Sur", "Este", "Oeste",
-    "Noreste", "Noroeste", "Sudeste", "Sudoeste"
-]
+Orient = Literal["N", "S", "E", "O", "NE", "NO", "SE", "SO"]
 
 
 class InputData(BaseModel):
-    alto: Optional[float] = Field(default=None, gt=0)
-    ancho: Optional[float] = Field(default=None, gt=0)
-    orientation: Optional[Orient] = None
+    nombre_espacio: Optional[str] = None
+    ubicacion: Optional[str] = None
 
+    orientation: Optional[Orient] = None
+    ancho: Optional[float] = Field(default=None, gt=0)
+    alto: Optional[float] = Field(default=None, gt=0)
     tv: float = Field(..., ge=0.0, le=1.0,
-                      description="Transmitancia visible 0–1")
-    ventana_ancho: Optional[float] = Field(default=None, ge=0.25, le=4.0)
-    ventana_alto: Optional[float] = Field(default=None, ge=0.25, le=3.0)
+                      description="Transmitancia visible (0 a 1)")
 
     @field_validator("tv")
     @classmethod
@@ -43,9 +39,23 @@ class InputData(BaseModel):
         return v
 
     def area_vidrio(self) -> Optional[float]:
-        if self.ventana_ancho and self.ventana_alto:
-            return self.ventana_ancho * self.ventana_alto
+        if self.ancho and self.alto:
+            return (self.ancho / 100) * (self.alto / 100)
         return None
+
+
+def traducir_orientacion(codigo: str) -> str:
+    nombres = {
+        "N": "Norte",
+        "S": "Sur",
+        "E": "Este",
+        "O": "Oeste",
+        "NE": "Noreste",
+        "NO": "Noroeste",
+        "SE": "Sudeste",
+        "SO": "Sudoeste"
+    }
+    return nombres.get(codigo.upper(), codigo)
 
 
 def calcular_metricas_desde_yhat(yhat: float) -> dict[str, int]:
@@ -75,8 +85,7 @@ def calcular_luz(data: InputData):
     area_v = data.area_vidrio()
     if area_v is not None and area_v > 12.0:
         raise HTTPException(
-            status_code=422, detail="Área de ventana no puede superar 12 m²"
-        )
+            status_code=422, detail="Área de ventana no puede superar 12 m²")
 
     try:
         heatmap = get_heatmap_data()
@@ -120,15 +129,16 @@ def calcular_luz(data: InputData):
                 })
         energia_pct = metricas["energia"]
 
-    msg = "OK" if yhat_pred is not None else \
-        "Heatmap generado. Ingresá medidas de ventana para ver tu predicción."
+    msg = "OK" if yhat_pred is not None else "Heatmap generado. Ingresá medidas de ventana para ver tu predicción."
 
     return {
         "ok": True,
         "mensaje": msg,
+        "nombre_espacio": data.nombre_espacio,
+        "ubicacion": data.ubicacion,
+        "orientacion_texto": traducir_orientacion(data.orientation) if data.orientation else None,
         "yhat_pred": yhat_pred,
         "punto_usado": punto_usado,
-        "orientacion_texto": data.orientation if data.orientation else None,
         "heatmap_data": heatmap,
         "metrics": metrics,
         "energia_pct": energia_pct,
