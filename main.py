@@ -6,14 +6,9 @@ import os
 
 from graficos import get_heatmap_data, predict_yhat_nearest
 from model_graph_area import get_model_sheet
-from colores import (
-    obtener_color_da,
-    obtener_color_udi,
-    obtener_color_sda,
-    obtener_color_sudi
-)
+from colores import obtener_color_hex
 
-app = FastAPI(title="Calculadora Luz Natural", version="1.0.1")
+app = FastAPI(title="Calculadora Luz Natural", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,25 +20,14 @@ app.add_middleware(
 
 Orient = Literal["N", "S", "E", "O", "NE", "NO", "SE", "SO"]
 
-orientacion_ampliada = {
-    "N": "Norte",
-    "S": "Sur",
-    "E": "Este",
-    "O": "Oeste",
-    "NE": "Noreste",
-    "NO": "Noroeste",
-    "SE": "Sudeste",
-    "SO": "Sudoeste"
-}
-
 
 class InputData(BaseModel):
+    alto: Optional[float] = Field(default=None, gt=0)
     ancho: Optional[float] = Field(default=None, gt=0)
-    largo: Optional[float] = Field(default=None, gt=0)
-    altura: Optional[float] = Field(default=None, gt=0)
     orientation: Optional[Orient] = None
 
-    tv: float = Field(..., ge=0.0, le=1.0)
+    tv: float = Field(..., ge=0.0, le=1.0,
+                      description="Transmitancia visible 0–1")
     ventana_ancho: Optional[float] = Field(default=None, ge=0.25, le=4.0)
     ventana_alto: Optional[float] = Field(default=None, ge=0.25, le=3.0)
 
@@ -60,6 +44,20 @@ class InputData(BaseModel):
         return None
 
 
+def traducir_orientacion(codigo: str) -> str:
+    nombres = {
+        "N": "Norte",
+        "S": "Sur",
+        "E": "Este",
+        "O": "Oeste",
+        "NE": "Noreste",
+        "NO": "Noroeste",
+        "SE": "Sudeste",
+        "SO": "Sudoeste"
+    }
+    return nombres.get(codigo.upper(), codigo)
+
+
 def calcular_metricas_desde_yhat(yhat: float) -> dict[str, int]:
     y = max(0, min(100, yhat))
     return {
@@ -74,7 +72,7 @@ def calcular_metricas_desde_yhat(yhat: float) -> dict[str, int]:
 
 @app.get("/")
 def root():
-    return {"message": "Calculadora Luz Natural API", "status": "running", "version": "1.0.1"}
+    return {"message": "Calculadora Luz Natural API", "status": "running", "version": "1.0.0"}
 
 
 @app.get("/health")
@@ -87,7 +85,8 @@ def calcular_luz(data: InputData):
     area_v = data.area_vidrio()
     if area_v is not None and area_v > 12.0:
         raise HTTPException(
-            status_code=422, detail="Área de ventana no puede superar 12 m²")
+            status_code=422, detail="Área de ventana no puede superar 12 m²"
+        )
 
     try:
         heatmap = get_heatmap_data()
@@ -113,33 +112,22 @@ def calcular_luz(data: InputData):
     if yhat_pred is not None:
         metricas = calcular_metricas_desde_yhat(yhat_pred)
         for key in ["DA", "UDI", "sDA", "sUDI", "DAv_zone"]:
-            valor = metricas[key]
-            hex_color = None
-
-            if key == "DA":
-                hex_color = obtener_color_da(valor)
-            elif key == "UDI":
-                hex_color = obtener_color_udi(valor)
-            elif key == "sDA":
-                hex_color = obtener_color_sda(valor)
-            elif key == "sUDI":
-                hex_color = obtener_color_sudi(valor)
-            elif key == "DAv_zone":
-                # usa el mismo rango que DA
-                hex_color = obtener_color_da(valor)
-
             try:
                 sheet = get_model_sheet(key)
+                color_hex = obtener_color_hex(key, metricas[key])
+                metrics.append({
+                    "key": key,
+                    "percent": metricas[key],
+                    "hex": color_hex,
+                    "sheet": sheet
+                })
             except Exception:
-                sheet = {"error": "Imagen no encontrada"}
-
-            metrics.append({
-                "key": key,
-                "percent": valor,
-                "color": hex_color,
-                "sheet": sheet
-            })
-
+                metrics.append({
+                    "key": key,
+                    "percent": metricas[key],
+                    "hex": obtener_color_hex(key, metricas[key]),
+                    "sheet": {"error": "Imagen no encontrada"}
+                })
         energia_pct = metricas["energia"]
 
     msg = "OK" if yhat_pred is not None else \
@@ -150,10 +138,10 @@ def calcular_luz(data: InputData):
         "mensaje": msg,
         "yhat_pred": yhat_pred,
         "punto_usado": punto_usado,
+        "orientacion_texto": traducir_orientacion(data.orientation) if data.orientation else None,
         "heatmap_data": heatmap,
         "metrics": metrics,
         "energia_pct": energia_pct,
-        "orientation_label": orientacion_ampliada.get(data.orientation, data.orientation)
     }
 
 
