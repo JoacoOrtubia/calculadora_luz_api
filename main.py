@@ -18,7 +18,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-Orient = Literal["N", "S", "E", "O", "NE", "NO", "SE", "SO"]
+# NUEVO: orientaciones extendidas, según el dropdown del wireframe
+Orient = Literal[
+    "Norte", "Sur", "Este", "Oeste",
+    "Noreste", "Noroeste", "Sudeste", "Sudoeste"
+]
 
 
 class InputData(BaseModel):
@@ -42,20 +46,6 @@ class InputData(BaseModel):
         if self.ventana_ancho and self.ventana_alto:
             return self.ventana_ancho * self.ventana_alto
         return None
-
-
-def traducir_orientacion(codigo: str) -> str:
-    nombres = {
-        "N": "Norte",
-        "S": "Sur",
-        "E": "Este",
-        "O": "Oeste",
-        "NE": "Noreste",
-        "NO": "Noroeste",
-        "SE": "Sudeste",
-        "SO": "Sudoeste"
-    }
-    return nombres.get(codigo.upper(), codigo)
 
 
 def calcular_metricas_desde_yhat(yhat: float) -> dict[str, int]:
@@ -138,7 +128,7 @@ def calcular_luz(data: InputData):
         "mensaje": msg,
         "yhat_pred": yhat_pred,
         "punto_usado": punto_usado,
-        "orientacion_texto": traducir_orientacion(data.orientation) if data.orientation else None,
+        "orientacion_texto": data.orientation if data.orientation else None,
         "heatmap_data": heatmap,
         "metrics": metrics,
         "energia_pct": energia_pct,
