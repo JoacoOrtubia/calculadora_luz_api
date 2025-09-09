@@ -1,6 +1,7 @@
 import os
 import base64
 
+# Asociaciones de métricas con imágenes
 GRAPH_PATHS = {
     "DA": "Metrica-temporal-DA_heatmap (1).png",
     "UDI": "Metrica-temporal-UDI_heatmap (1).png",
@@ -12,13 +13,13 @@ GRAPH_PATHS = {
 
 def get_model_sheet(metric: str) -> dict:
     """
-    Obtiene la información del modelo y la imagen asociada
+    Devuelve un diccionario con la información de la métrica y la imagen en base64.
 
     Args:
-        metric: La métrica solicitada (DA, UDI, sDA, sUDI, DAv_zone)
+        metric (str): Una de las métricas: DA, UDI, sDA, sUDI, DAv_zone
 
     Returns:
-        dict: Información del modelo con imagen en base64
+        dict: Contenido de la hoja del modelo
     """
     if metric not in GRAPH_PATHS:
         raise ValueError(
@@ -26,7 +27,7 @@ def get_model_sheet(metric: str) -> dict:
 
     filepath = os.path.join(os.path.dirname(__file__), GRAPH_PATHS[metric])
 
-    # Si el archivo de imagen no existe, devolver info sin imagen
+    # Si el archivo no existe, retorna un error controlado
     if not os.path.exists(filepath):
         return {
             "metric": metric,
@@ -37,12 +38,12 @@ def get_model_sheet(metric: str) -> dict:
         }
 
     try:
-        with open(filepath, "rb") as image_file:
-            encoded = base64.b64encode(image_file.read()).decode("utf-8")
+        with open(filepath, "rb") as img_file:
+            encoded_img = base64.b64encode(img_file.read()).decode("utf-8")
 
         return {
             "metric": metric,
-            "image_base64": encoded,
+            "image_base64": encoded_img,
             "filename": os.path.basename(filepath),
             "description": get_metric_description(metric)
         }
@@ -58,28 +59,28 @@ def get_model_sheet(metric: str) -> dict:
 
 
 def get_metric_description(metric: str) -> str:
-    """Devuelve descripción de la métrica"""
+    """Descripción amigable por cada métrica"""
     descriptions = {
-        "DA": "Daylight Autonomy - Porcentaje del tiempo que se cumple el nivel mínimo de iluminación",
-        "UDI": "Useful Daylight Illuminance - Iluminancia útil entre 100-2000 lux",
-        "sDA": "Spatial Daylight Autonomy - DA espacial en el 50% del espacio",
-        "sUDI": "Spatial Useful Daylight Illuminance - UDI espacial",
-        "DAv_zone": "Daylight Autonomy por zona - DA promedio por zona espacial"
+        "DA": "Daylight Autonomy - Porcentaje de tiempo con nivel mínimo de luz natural.",
+        "UDI": "Useful Daylight Illuminance - Luz útil entre 100 y 2000 lux.",
+        "sDA": "Spatial Daylight Autonomy - Porcentaje del espacio que cumple DA.",
+        "sUDI": "Spatial Useful Daylight Illuminance - UDI aplicada a superficie.",
+        "DAv_zone": "DA combinada con superficie y zona - Enfoque híbrido de tiempo y espacio."
     }
-    return descriptions.get(metric, f"Descripción de métrica {metric}")
+    return descriptions.get(metric, f"Descripción de la métrica {metric}")
 
 
 def list_available_images() -> dict:
-    """Lista las imágenes disponibles en el directorio"""
+    """Devuelve info de disponibilidad de imágenes en disco"""
     current_dir = os.path.dirname(__file__)
-    available = {}
+    result = {}
 
     for metric, filename in GRAPH_PATHS.items():
-        filepath = os.path.join(current_dir, filename)
-        available[metric] = {
+        full_path = os.path.join(current_dir, filename)
+        result[metric] = {
             "filename": filename,
-            "exists": os.path.exists(filepath),
-            "path": filepath
+            "exists": os.path.exists(full_path),
+            "path": full_path
         }
 
-    return available
+    return result

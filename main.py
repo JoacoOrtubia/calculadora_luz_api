@@ -6,9 +6,14 @@ import os
 
 from graficos import get_heatmap_data, predict_yhat_nearest
 from model_graph_area import get_model_sheet
-from colores import get_color_for_metric  # 👈 Importar lógica de colores
+from colores import (
+    obtener_color_da,
+    obtener_color_udi,
+    obtener_color_sda,
+    obtener_color_sudi
+)
 
-app = FastAPI(title="Calculadora Luz Natural", version="1.0.0")
+app = FastAPI(title="Calculadora Luz Natural", version="1.0.1")
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,7 +25,7 @@ app.add_middleware(
 
 Orient = Literal["N", "S", "E", "O", "NE", "NO", "SE", "SO"]
 
-ORIENTATION_MAP = {
+orientacion_ampliada = {
     "N": "Norte",
     "S": "Sur",
     "E": "Este",
@@ -38,8 +43,7 @@ class InputData(BaseModel):
     altura: Optional[float] = Field(default=None, gt=0)
     orientation: Optional[Orient] = None
 
-    tv: float = Field(..., ge=0.0, le=1.0,
-                      description="Transmitancia visible 0–1")
+    tv: float = Field(..., ge=0.0, le=1.0)
     ventana_ancho: Optional[float] = Field(default=None, ge=0.25, le=4.0)
     ventana_alto: Optional[float] = Field(default=None, ge=0.25, le=3.0)
 
@@ -70,7 +74,7 @@ def calcular_metricas_desde_yhat(yhat: float) -> dict[str, int]:
 
 @app.get("/")
 def root():
-    return {"message": "Calculadora Luz Natural API", "status": "running", "version": "1.0.0"}
+    return {"message": "Calculadora Luz Natural API", "status": "running", "version": "1.0.1"}
 
 
 @app.get("/health")
@@ -109,21 +113,33 @@ def calcular_luz(data: InputData):
     if yhat_pred is not None:
         metricas = calcular_metricas_desde_yhat(yhat_pred)
         for key in ["DA", "UDI", "sDA", "sUDI", "DAv_zone"]:
+            valor = metricas[key]
+            hex_color = None
+
+            if key == "DA":
+                hex_color = obtener_color_da(valor)
+            elif key == "UDI":
+                hex_color = obtener_color_udi(valor)
+            elif key == "sDA":
+                hex_color = obtener_color_sda(valor)
+            elif key == "sUDI":
+                hex_color = obtener_color_sudi(valor)
+            elif key == "DAv_zone":
+                # usa el mismo rango que DA
+                hex_color = obtener_color_da(valor)
+
             try:
                 sheet = get_model_sheet(key)
-                metrics.append({
-                    "key": key,
-                    "percent": metricas[key],
-                    "color": get_color_for_metric(key, metricas[key]),
-                    "sheet": sheet
-                })
             except Exception:
-                metrics.append({
-                    "key": key,
-                    "percent": metricas[key],
-                    "color": get_color_for_metric(key, metricas[key]),
-                    "sheet": {"error": "Imagen no encontrada"}
-                })
+                sheet = {"error": "Imagen no encontrada"}
+
+            metrics.append({
+                "key": key,
+                "percent": valor,
+                "color": hex_color,
+                "sheet": sheet
+            })
+
         energia_pct = metricas["energia"]
 
     msg = "OK" if yhat_pred is not None else \
@@ -134,11 +150,10 @@ def calcular_luz(data: InputData):
         "mensaje": msg,
         "yhat_pred": yhat_pred,
         "punto_usado": punto_usado,
-        "orientacion_extendida": ORIENTATION_MAP.get(data.orientation) if data.orientation else None,
         "heatmap_data": heatmap,
         "metrics": metrics,
         "energia_pct": energia_pct,
-        "energia_color": get_color_for_metric("energia", energia_pct) if energia_pct is not None else None
+        "orientation_label": orientacion_ampliada.get(data.orientation, data.orientation)
     }
 
 
