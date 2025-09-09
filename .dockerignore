@@ -1,15 +1,52 @@
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.Python
+*.so
+
+# Entornos virtuales
+.env
+.venv/
+env/
+ENV/
+venv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema
+.DS_Store
+Thumbs.db
+.git/
+.gitignore
+README.md
+
+# Logs y bases de datos
+*.log
 *.db
 *.sqlite3
-*.log
-.DS_Store
-.venv/
-.env
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.csv
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Documentación
+docs/
+
+# Tests
+tests/
+.pytest_cache/
+
+# No incluir imágenes grandes si no son necesarias en producción
+# *.png
+# *.jpg
+# *.jpeg
+# *.gif
+
+# Mantener el CSV que es necesario para la aplicación
+# *.csv
