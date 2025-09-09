@@ -18,18 +18,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-Orient = Literal["N", "S", "E", "O", "NE", "NO", "SE", "SO"]
+# ===================== #
+# 📍 Orientación (texto)
+# ===================== #
+
+
+def traducir_orientacion(sigla: str) -> str:
+    nombres = {
+        "N": "Norte", "S": "Sur", "E": "Este", "O": "Oeste",
+        "NE": "Noreste", "NO": "Noroeste", "SE": "Sudeste", "SO": "Sudoeste"
+    }
+    return nombres.get(sigla.upper(), sigla)
+
+
+def codificar_orientacion(nombre: str) -> Optional[str]:
+    traducciones = {
+        "Norte": "N", "Sur": "S", "Este": "E", "Oeste": "O",
+        "Noreste": "NE", "Noroeste": "NO", "Sudeste": "SE", "Sudoeste": "SO"
+    }
+    return traducciones.get(nombre, None)
+
+# ========================== #
+# 🧩 Validaciones y esquema
+# ========================== #
 
 
 class InputData(BaseModel):
-    nombre_espacio: Optional[str] = None
+    alto: Optional[float] = Field(default=None, ge=0.25, le=3.0)
+    ancho: Optional[float] = Field(default=None, ge=0.25, le=4.0)
+    tv: float = Field(..., ge=0.1, le=0.9)
+    # Se recibe como texto largo ("Norte", etc.)
+    orientation: Optional[str] = None
     ubicacion: Optional[str] = None
-
-    orientation: Optional[Orient] = None
-    ancho: Optional[float] = Field(default=None, gt=0)
-    alto: Optional[float] = Field(default=None, gt=0)
-    tv: float = Field(..., ge=0.0, le=1.0,
-                      description="Transmitancia visible (0 a 1)")
+    nombre_espacio: Optional[str] = None
 
     @field_validator("tv")
     @classmethod
@@ -40,22 +61,12 @@ class InputData(BaseModel):
 
     def area_vidrio(self) -> Optional[float]:
         if self.ancho and self.alto:
-            return (self.ancho / 100) * (self.alto / 100)
+            return round(self.ancho * self.alto, 4)
         return None
 
-
-def traducir_orientacion(codigo: str) -> str:
-    nombres = {
-        "N": "Norte",
-        "S": "Sur",
-        "E": "Este",
-        "O": "Oeste",
-        "NE": "Noreste",
-        "NO": "Noroeste",
-        "SE": "Sudeste",
-        "SO": "Sudoeste"
-    }
-    return nombres.get(codigo.upper(), codigo)
+# =================== #
+# 📊 Cálculo métricas
+# =================== #
 
 
 def calcular_metricas_desde_yhat(yhat: float) -> dict[str, int]:
@@ -68,6 +79,10 @@ def calcular_metricas_desde_yhat(yhat: float) -> dict[str, int]:
         "DAv_zone": int(y),
         "energia": int(max(0, 100 - y)),
     }
+
+# =================== #
+# 🧠 Endpoints
+# =================== #
 
 
 @app.get("/")
@@ -94,6 +109,11 @@ def calcular_luz(data: InputData):
 
     yhat_pred = None
     punto_usado = None
+    metrics = []
+    energia_pct = None
+
+    orient_sigla = codificar_orientacion(
+        data.orientation) if data.orientation else None
 
     if area_v is not None:
         try:
@@ -104,9 +124,6 @@ def calcular_luz(data: InputData):
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Error en predicción: {e}")
-
-    metrics = []
-    energia_pct = None
 
     if yhat_pred is not None:
         metricas = calcular_metricas_desde_yhat(yhat_pred)
@@ -134,14 +151,15 @@ def calcular_luz(data: InputData):
     return {
         "ok": True,
         "mensaje": msg,
-        "nombre_espacio": data.nombre_espacio,
-        "ubicacion": data.ubicacion,
-        "orientacion_texto": traducir_orientacion(data.orientation) if data.orientation else None,
         "yhat_pred": yhat_pred,
         "punto_usado": punto_usado,
         "heatmap_data": heatmap,
         "metrics": metrics,
         "energia_pct": energia_pct,
+        "orientacion_texto": data.orientation,
+        "orientacion_codigo": orient_sigla,
+        "ubicacion": data.ubicacion,
+        "nombre_espacio": data.nombre_espacio
     }
 
 
