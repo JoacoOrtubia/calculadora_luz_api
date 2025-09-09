@@ -1,25 +1,35 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
-from typing import Optional, List, Dict, Literal
+from typing import Optional, Literal
 import os
 
 from graficos import get_heatmap_data, predict_yhat_nearest
 from model_graph_area import get_model_sheet
+from colores import get_color_for_metric  # 👈 Importar lógica de colores
 
 app = FastAPI(title="Calculadora Luz Natural", version="1.0.0")
 
-# Permitir CORS (puede ajustar en producción)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Cambiar por dominio real si se necesita
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
-# Validaciones de orientación
 Orient = Literal["N", "S", "E", "O", "NE", "NO", "SE", "SO"]
+
+ORIENTATION_MAP = {
+    "N": "Norte",
+    "S": "Sur",
+    "E": "Este",
+    "O": "Oeste",
+    "NE": "Noreste",
+    "NO": "Noroeste",
+    "SE": "Sudeste",
+    "SO": "Sudoeste"
+}
 
 
 class InputData(BaseModel):
@@ -104,13 +114,14 @@ def calcular_luz(data: InputData):
                 metrics.append({
                     "key": key,
                     "percent": metricas[key],
+                    "color": get_color_for_metric(key, metricas[key]),
                     "sheet": sheet
                 })
             except Exception:
-                # Si no encuentra la imagen, continuar sin ella
                 metrics.append({
                     "key": key,
                     "percent": metricas[key],
+                    "color": get_color_for_metric(key, metricas[key]),
                     "sheet": {"error": "Imagen no encontrada"}
                 })
         energia_pct = metricas["energia"]
@@ -123,9 +134,11 @@ def calcular_luz(data: InputData):
         "mensaje": msg,
         "yhat_pred": yhat_pred,
         "punto_usado": punto_usado,
+        "orientacion_extendida": ORIENTATION_MAP.get(data.orientation) if data.orientation else None,
         "heatmap_data": heatmap,
         "metrics": metrics,
         "energia_pct": energia_pct,
+        "energia_color": get_color_for_metric("energia", energia_pct) if energia_pct is not None else None
     }
 
 
@@ -138,12 +151,9 @@ def model_sheet(metric: Literal["DA", "UDI", "sDA", "sUDI", "DAv_zone"] = Query(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
-# Endpoint adicional para debug
-
 
 @app.get("/debug")
 def debug_info():
-    import os
     current_dir = os.getcwd()
     files = os.listdir(current_dir)
     return {
