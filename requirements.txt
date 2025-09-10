@@ -1,16 +1,17 @@
 # --- Core FastAPI stack ---
-fastapi>=0.100.0,<0.111.0
-uvicorn>=0.20.0,<0.30.0
+fastapi==0.104.1
+uvicorn==0.24.0
 
 # --- Data handling ---
-pandas>=2.0.0,<2.2.0
+pandas==2.1.4
+numpy==1.26.4
 
 # --- Validaciones y formularios ---
-pydantic>=2.0.0,<3.0.0
-python-multipart>=0.0.6
+pydantic==2.5.0
+python-multipart==0.0.6
 
 # --- Variables de entorno ---
-python-dotenv>=1.0.0
+python-dotenv==1.0.0
 
 # --- Producción ---
-gunicorn>=21.0.0
+gunicorn==21.2.0
