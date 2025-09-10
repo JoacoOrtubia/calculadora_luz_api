@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 
 # Define el directorio de trabajo dentro del contenedor
-WORKDIR /
+WORKDIR /app
 
 # Instalar dependencias del sistema si son necesarias
 RUN apt-get update && apt-get install -y \
