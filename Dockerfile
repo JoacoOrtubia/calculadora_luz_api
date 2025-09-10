@@ -4,7 +4,6 @@ FROM python:3.11-slim
 # Configurar variables de entorno
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=/app
 
 # Define el directorio de trabajo dentro del contenedor
 WORKDIR /app
@@ -29,4 +28,4 @@ RUN mkdir -p /app/logs
 EXPOSE 10000
 
 # Comando para iniciar la API con Uvicorn usando python -m
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "10000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "10000"]
