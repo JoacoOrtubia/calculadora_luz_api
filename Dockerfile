@@ -28,5 +28,5 @@ RUN mkdir -p /app/logs
 # Expone el puerto en el que corre la aplicación
 EXPOSE 10000
 
-# Comando para iniciar la API con Uvicorn
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "10000", "--workers", "1"]
+# Comando para iniciar la API con Uvicorn usando python -m
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "10000"]
