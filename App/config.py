@@ -10,9 +10,13 @@ class Settings:
     version: str = "1.0.0"
     debug: bool = os.getenv("DEBUG", "false").lower() == "true"
 
-    # CORS
-    # En producción, especificar dominios exactos
-    allowed_origins: List[str] = ["*"]
+    # CORS - Configurado para Lovable y desarrollo local
+    allowed_origins: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:5173", 
+        "https://*.lovableproject.com",
+        "https://lovableproject.com"
+    ]
 
     # Límites de validación
     max_area_vidrio: float = 12.0  # m²
