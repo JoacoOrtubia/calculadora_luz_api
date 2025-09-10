@@ -4,7 +4,6 @@ FROM python:3.11-slim
 # Configurar variables de entorno
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=/app
 
 # Define el directorio de trabajo dentro del contenedor
 WORKDIR /app
@@ -21,6 +20,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # Copia el resto de los archivos del proyecto
 COPY . .
+
+# Configurar PYTHONPATH después de copiar los archivos
+ENV PYTHONPATH=/app
 
 # Crear directorio para logs si es necesario
 RUN mkdir -p /app/logs
