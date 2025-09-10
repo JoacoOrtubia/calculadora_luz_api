@@ -29,4 +29,4 @@ RUN mkdir -p /app/logs
 EXPOSE 10000
 
 # Comando para iniciar la API con Uvicorn usando python -m
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "10000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "10000"]
