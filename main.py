@@ -1,39 +1,60 @@
-"""
-Entry point for the application - imports from app.main
-This file helps Render find the application when app module imports fail
-"""
-import sys
 import os
+import uvicorn
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-# Add current directory to Python path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, current_dir)
+from config import get_settings
+from routers import luz_router
 
-# Debug: Print current directory and contents
-print(f"Current directory: {current_dir}")
-print(f"Contents: {os.listdir(current_dir)}")
-print(f"Python path: {sys.path[:3]}")
+# Configuración
+settings = get_settings()
 
-try:
-    # Try importing from app.main
-    from app.main import app
-    print("Successfully imported from app.main")
-except ImportError as e:
-    print(f"Import error: {e}")
-    # Try adding app directory specifically to path
-    app_dir = os.path.join(current_dir, 'app')
-    if os.path.exists(app_dir):
-        sys.path.insert(0, app_dir)
-        print(f"Added app directory to path: {app_dir}")
-        # Import main module directly
-        import main as app_main
-        app = app_main.app
-        print("Successfully imported via fallback method")
-    else:
-        print(f"App directory not found at: {app_dir}")
-        raise
+# Crear app FastAPI
+app = FastAPI(
+    title=settings.app_name,
+    description="API para cálculo de métricas de iluminación natural en espacios interiores",
+    version=settings.version,
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
 
-# This allows uvicorn to find the app at main:app
+# CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.allowed_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
+
+# Incluir routers
+app.include_router(luz_router.router, prefix="/api/v1")
+
+# Endpoint raíz
+
+
+@app.get("/")
+def root():
+    return {
+        "mensaje": "Calculadora Luz Natural API",
+        "estado": "funcionando",
+        "version": settings.version,
+        "docs": "/docs"
+    }
+
+# Health check
+
+
+@app.get("/health")
+def health_check():
+    return {"estado": "ok", "servicio": "calculadora_luz_natural"}
+
+
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=port,
+        reload=False
+    )
