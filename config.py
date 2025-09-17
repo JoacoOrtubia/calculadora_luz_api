@@ -13,9 +13,11 @@ class Settings:
     # CORS - Configurado para Lovable y desarrollo local
     allowed_origins: List[str] = [
         "http://localhost:3000",
-        "http://localhost:5173", 
+        "http://localhost:5173",
         "https://*.lovableproject.com",
-        "https://lovableproject.com"
+        "https://lovableproject.com",
+        "https://preview--luz-natural-lab.lovable.app",
+        "https://luz-natural-lab.lovable.app"
     ]
 
     # Límites de validación
