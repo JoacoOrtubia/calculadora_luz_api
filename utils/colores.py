@@ -141,6 +141,7 @@ def get_color_legend(metrica: str) -> dict:
 def obtener_color_heatmap(yhat_value: float) -> str:
     """
     Genera color para el heatmap basado en el valor yhat.
+    Usa degradé suave de 21 colores de violeta a magenta.
 
     Args:
         yhat_value: Valor yhat del punto del heatmap
@@ -148,26 +149,48 @@ def obtener_color_heatmap(yhat_value: float) -> str:
     Returns:
         String con el color en formato hexadecimal
     """
-    if yhat_value < 10:
-        return "#0D47A1"  # Azul muy oscuro
+    if yhat_value < 5:
+        return "#8555F0"  # 0% - Violeta base
+    elif yhat_value < 10:
+        return "#7B4FE8"  # 5% - Violeta intermedio
+    elif yhat_value < 15:
+        return "#6B47DF"  # 10% - Violeta-azul
     elif yhat_value < 20:
-        return "#1565C0"  # Azul oscuro
+        return "#5A3FD7"  # 15% - Azul-violeta
+    elif yhat_value < 25:
+        return "#4937CE"  # 20% - Azul base
     elif yhat_value < 30:
-        return "#1976D2"  # Azul
+        return "#3B3BC8"  # 25% - Azul intermedio
+    elif yhat_value < 35:
+        return "#2D4FC2"  # 30% - Azul-cian
     elif yhat_value < 40:
-        return "#2196F3"  # Azul claro
+        return "#1F63BC"  # 35% - Cian-azul
+    elif yhat_value < 45:
+        return "#31A0D7"  # 40% - Cian base
     elif yhat_value < 50:
-        return "#42A5F5"  # Azul muy claro
+        return "#2FB5C9"  # 45% - Cian-verde
+    elif yhat_value < 55:
+        return "#2DCABB"  # 50% - Verde-cian
     elif yhat_value < 60:
-        return "#FFC107"  # Amarillo
+        return "#3BE0A5"  # 55% - Verde intermedio
+    elif yhat_value < 65:
+        return "#48F177"  # 60% - Verde base
     elif yhat_value < 70:
-        return "#FF9800"  # Naranja
+        return "#5EED6F"  # 65% - Verde-amarillo
+    elif yhat_value < 75:
+        return "#74E968"  # 70% - Amarillo-verde
     elif yhat_value < 80:
-        return "#FF5722"  # Naranja oscuro
+        return "#8AE560"  # 75% - Amarillo base
+    elif yhat_value < 85:
+        return "#A0E158"  # 80% - Amarillo-naranja
     elif yhat_value < 90:
-        return "#F44336"  # Rojo
-    else:  # >= 90
-        return "#B71C1C"  # Rojo muy oscuro
+        return "#C4DC4F"  # 85% - Naranja-amarillo
+    elif yhat_value < 95:
+        return "#E07060"  # 90% - Naranja base
+    elif yhat_value < 100:
+        return "#E85B85"  # 95% - Naranja-magenta
+    else:  # >= 100
+        return "#D33AB4"  # 100% - Magenta base
 
 
 def generar_colores_heatmap(heatmap_data: list) -> list:
