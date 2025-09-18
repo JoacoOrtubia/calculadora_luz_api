@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Tuple
 from schemas.luz_schemas import VentanaInput, MetricaOutput, PuntoUsado
 from services.data_service import DataService
-from utils.colores import obtener_color_hex
+from utils.colores import obtener_color_hex, generar_colores_heatmap
 from utils.orientacion import codificar_orientacion
 
 
@@ -87,6 +87,9 @@ class LuzNaturalService:
         # Obtener datos del heatmap
         heatmap_data = self.data_service.get_heatmap_data()
 
+        # Generar colores para el heatmap
+        heatmap_colors = generar_colores_heatmap(heatmap_data)
+
         # Inicializar variables de respuesta
         yhat_pred = None
         punto_usado = None
@@ -129,6 +132,7 @@ class LuzNaturalService:
             "yhat_pred": yhat_pred,
             "punto_usado": punto_usado.dict() if punto_usado else None,
             "heatmap_data": heatmap_data,
+            "heatmap_colors": heatmap_colors,
             "metrics": [metric.dict() for metric in metrics],
             "energia_pct": energia_pct,
             "orientacion_texto": data.orientation,

@@ -81,6 +81,8 @@ class LuzNaturalResponse(BaseModel):
         description="Punto del dataset usado")
     heatmap_data: List[List[float]] = Field(
         description="Datos para generar heatmap")
+    heatmap_colors: List[str] = Field(
+        description="Colores hexadecimales para cada punto del heatmap")
     metrics: List[MetricaOutput] = Field(
         description="Lista de métricas calculadas")
     energia_pct: Optional[int] = Field(

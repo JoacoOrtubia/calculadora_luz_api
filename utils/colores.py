@@ -136,3 +136,57 @@ def get_color_legend(metrica: str) -> dict:
     }
 
     return legends.get(metrica, [])
+
+
+def obtener_color_heatmap(yhat_value: float) -> str:
+    """
+    Genera color para el heatmap basado en el valor yhat.
+
+    Args:
+        yhat_value: Valor yhat del punto del heatmap
+
+    Returns:
+        String con el color en formato hexadecimal
+    """
+    if yhat_value < 10:
+        return "#0D47A1"  # Azul muy oscuro
+    elif yhat_value < 20:
+        return "#1565C0"  # Azul oscuro
+    elif yhat_value < 30:
+        return "#1976D2"  # Azul
+    elif yhat_value < 40:
+        return "#2196F3"  # Azul claro
+    elif yhat_value < 50:
+        return "#42A5F5"  # Azul muy claro
+    elif yhat_value < 60:
+        return "#FFC107"  # Amarillo
+    elif yhat_value < 70:
+        return "#FF9800"  # Naranja
+    elif yhat_value < 80:
+        return "#FF5722"  # Naranja oscuro
+    elif yhat_value < 90:
+        return "#F44336"  # Rojo
+    else:  # >= 90
+        return "#B71C1C"  # Rojo muy oscuro
+
+
+def generar_colores_heatmap(heatmap_data: list) -> list:
+    """
+    Genera array de colores para cada punto del heatmap.
+
+    Args:
+        heatmap_data: Lista de listas con [area_vidrio, tv, yhat]
+
+    Returns:
+        Lista de colores hexadecimales correspondientes a cada punto
+    """
+    colores = []
+    for punto in heatmap_data:
+        if len(punto) >= 3:
+            yhat_value = punto[2]  # El tercer elemento es yhat
+            color = obtener_color_heatmap(yhat_value)
+            colores.append(color)
+        else:
+            colores.append("#CCCCCC")  # Color por defecto si no hay yhat
+
+    return colores
