@@ -69,6 +69,38 @@ class LuzNaturalService:
 
         return resultado
 
+    def generar_echarts_data(self, heatmap_data: List, heatmap_colors: List) -> List[Dict]:
+        """
+        Genera datos pre-formateados para ECharts con colores exactos
+
+        Args:
+            heatmap_data: Lista de puntos [area, tv, yhat]
+            heatmap_colors: Lista de colores hexadecimales
+
+        Returns:
+            Lista de objetos listos para ECharts
+        """
+        echarts_data = []
+
+        for i, punto in enumerate(heatmap_data):
+            if i < len(heatmap_colors):
+                echarts_data.append({
+                    "value": [punto[0], punto[1], punto[2]],  # [área, tv, yhat]
+                    "itemStyle": {
+                        "color": heatmap_colors[i]
+                    }
+                })
+            else:
+                # Fallback si no hay color disponible
+                echarts_data.append({
+                    "value": [punto[0], punto[1], punto[2]],
+                    "itemStyle": {
+                        "color": "#CCCCCC"
+                    }
+                })
+
+        return echarts_data
+
     def procesar_calculo_luz(self, data: VentanaInput) -> Dict:
         """
         Procesa el cálculo completo de luz natural
@@ -89,6 +121,9 @@ class LuzNaturalService:
 
         # Generar colores para el heatmap
         heatmap_colors = generar_colores_heatmap(heatmap_data)
+
+        # Generar datos pre-formateados para ECharts
+        echarts_data = self.generar_echarts_data(heatmap_data, heatmap_colors)
 
         # Inicializar variables de respuesta
         yhat_pred = None
@@ -133,6 +168,7 @@ class LuzNaturalService:
             "punto_usado": punto_usado.dict() if punto_usado else None,
             "heatmap_data": heatmap_data,
             "heatmap_colors": heatmap_colors,
+            "echarts_data": echarts_data,  # NUEVO: Datos listos para ECharts
             "metrics": [metric.dict() for metric in metrics],
             "energia_pct": energia_pct,
             "orientacion_texto": data.orientation,
