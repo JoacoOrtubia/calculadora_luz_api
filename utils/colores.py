@@ -193,9 +193,57 @@ def obtener_color_heatmap(yhat_value: float) -> str:
         return "#D33AB4"  # 100% - Magenta base
 
 
+def obtener_color_heatmap_normalizado(valor_normalizado: float) -> str:
+    """
+    Genera color para el heatmap basado en valor normalizado 0-100.
+    Distribuye los 21 colores uniformemente en el rango 0-100.
+
+    Args:
+        valor_normalizado: Valor entre 0 y 100
+
+    Returns:
+        String con el color en formato hexadecimal
+    """
+    # Asegurar que el valor esté en el rango 0-100
+    valor = max(0, min(100, valor_normalizado))
+
+    # Los 21 colores del degradé completo
+    colores_degrade = [
+        "#8555F0",  # 0% - Violeta base
+        "#7B4FE8",  # 5% - Violeta intermedio
+        "#6B47DF",  # 10% - Violeta-azul
+        "#5A3FD7",  # 15% - Azul-violeta
+        "#4937CE",  # 20% - Azul base
+        "#3B3BC8",  # 25% - Azul intermedio
+        "#2D4FC2",  # 30% - Azul-cian
+        "#1F63BC",  # 35% - Cian-azul
+        "#31A0D7",  # 40% - Cian base
+        "#2FB5C9",  # 45% - Cian-verde
+        "#2DCABB",  # 50% - Verde-cian
+        "#3BE0A5",  # 55% - Verde intermedio
+        "#48F177",  # 60% - Verde base
+        "#5EED6F",  # 65% - Verde-amarillo
+        "#74E968",  # 70% - Amarillo-verde
+        "#8AE560",  # 75% - Amarillo base
+        "#A0E158",  # 80% - Amarillo-naranja
+        "#C4DC4F",  # 85% - Naranja-amarillo
+        "#E07060",  # 90% - Naranja base
+        "#E85B85",  # 95% - Naranja-magenta
+        "#D33AB4"   # 100% - Magenta base
+    ]
+
+    # Calcular índice del color basado en el valor normalizado
+    # Distribuir uniformemente los 21 colores en el rango 0-100
+    indice = int((valor / 100) * (len(colores_degrade) - 1))
+    indice = max(0, min(len(colores_degrade) - 1, indice))
+
+    return colores_degrade[indice]
+
+
 def generar_colores_heatmap(heatmap_data: list) -> list:
     """
-    Genera array de colores para cada punto del heatmap.
+    Genera array de colores para cada punto del heatmap usando el rango real de datos.
+    Distribuye los 21 colores uniformemente sobre el rango min-max de valores yhat.
 
     Args:
         heatmap_data: Lista de listas con [area_vidrio, tv, yhat]
@@ -203,13 +251,32 @@ def generar_colores_heatmap(heatmap_data: list) -> list:
     Returns:
         Lista de colores hexadecimales correspondientes a cada punto
     """
+    # Extraer todos los valores yhat válidos
+    valores_yhat = []
+    for punto in heatmap_data:
+        if len(punto) >= 3:
+            valores_yhat.append(punto[2])
+
+    if not valores_yhat:
+        return ["#CCCCCC"] * len(heatmap_data)
+
+    # Calcular rango real de los datos
+    min_yhat = min(valores_yhat)
+    max_yhat = max(valores_yhat)
+
+    # Evitar división por cero
+    if max_yhat == min_yhat:
+        return [obtener_color_heatmap_normalizado(50)] * len(heatmap_data)
+
     colores = []
     for punto in heatmap_data:
         if len(punto) >= 3:
-            yhat_value = punto[2]  # El tercer elemento es yhat
-            color = obtener_color_heatmap(yhat_value)
+            yhat_value = punto[2]
+            # Normalizar al rango 0-100 según min-max real
+            valor_normalizado = ((yhat_value - min_yhat) / (max_yhat - min_yhat)) * 100
+            color = obtener_color_heatmap_normalizado(valor_normalizado)
             colores.append(color)
         else:
-            colores.append("#CCCCCC")  # Color por defecto si no hay yhat
+            colores.append("#CCCCCC")
 
     return colores
