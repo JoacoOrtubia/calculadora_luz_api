@@ -405,7 +405,7 @@ class LuzNaturalService:
         """
         # Verificar que sea una métrica válida para rangos discretos
         metricas_validas = ["DA", "UDI", "sDA", "sUDI"]
-        if metrica.upper() not in metricas_validas:
+        if metrica not in metricas_validas:
             return {
                 "error": f"Métrica {metrica} no soportada para rangos discretos"
             }

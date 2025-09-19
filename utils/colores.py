@@ -427,7 +427,7 @@ def generar_colores_por_rangos(metrica: str, valores: list) -> list:
         "sUDI": obtener_color_por_rango_sudi,
     }
 
-    color_func = color_functions.get(metrica.upper())
+    color_func = color_functions.get(metrica)
     if not color_func:
         return ["#CCCCCC"] * len(valores)
 
