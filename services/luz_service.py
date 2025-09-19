@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Tuple
 from schemas.luz_schemas import VentanaInput, MetricaOutput, PuntoUsado
 from services.data_service import DataService
-from utils.colores import obtener_color_hex, generar_colores_heatmap
+from utils.colores import obtener_color_hex, generar_colores_heatmap, generar_colores_metrica_heatmap
 from utils.orientacion import codificar_orientacion
 
 
@@ -175,4 +175,70 @@ class LuzNaturalService:
             "orientacion_codigo": orient_sigla,
             "ubicacion": data.ubicacion,
             "nombre_espacio": data.nombre_espacio
+        }
+
+    def generar_datos_metrica_individual(self, metrica: str) -> Dict:
+        """
+        Genera datos de heatmap para una métrica individual usando colores violeta-magenta.
+
+        Args:
+            metrica: Nombre de la métrica (DA, UDI, sDA, sUDI, DAv_zone)
+
+        Returns:
+            Dict con datos y colores para la métrica específica
+        """
+        # Obtener datos base del heatmap
+        heatmap_data = self.data_service.get_heatmap_data()
+
+        if not heatmap_data:
+            return {
+                "metrica": metrica,
+                "heatmap_data": [],
+                "colores_metrica": [],
+                "echarts_data": [],
+                "error": "No hay datos disponibles"
+            }
+
+        # Calcular valores de la métrica para cada punto del heatmap
+        valores_metrica = []
+        for punto in heatmap_data:
+            if len(punto) >= 3:
+                yhat_value = punto[2]
+                metricas_dict = self.calcular_metricas_desde_yhat(yhat_value)
+                valor_metrica = metricas_dict.get(metrica, 0)
+                valores_metrica.append(valor_metrica)
+            else:
+                valores_metrica.append(0)
+
+        # Generar colores usando el degradé violeta-magenta
+        colores_metrica = generar_colores_metrica_heatmap(metrica, valores_metrica)
+
+        # Generar datos pre-formateados para ECharts con colores de la métrica
+        echarts_data = []
+        for i, punto in enumerate(heatmap_data):
+            if i < len(valores_metrica) and i < len(colores_metrica):
+                echarts_data.append({
+                    "value": [punto[0], punto[1], valores_metrica[i]],  # [área, tv, valor_metrica]
+                    "itemStyle": {
+                        "color": colores_metrica[i]
+                    }
+                })
+            else:
+                echarts_data.append({
+                    "value": [punto[0], punto[1], 0],
+                    "itemStyle": {
+                        "color": "#CCCCCC"
+                    }
+                })
+
+        return {
+            "metrica": metrica,
+            "heatmap_data": heatmap_data,
+            "valores_metrica": valores_metrica,
+            "colores_metrica": colores_metrica,
+            "echarts_data": echarts_data,
+            "rango_valores": {
+                "min": min(valores_metrica) if valores_metrica else 0,
+                "max": max(valores_metrica) if valores_metrica else 0
+            }
         }

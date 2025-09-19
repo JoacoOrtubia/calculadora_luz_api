@@ -158,3 +158,25 @@ def debug_info():
         ruta_csv=csv_path if csv_exists else None,
         estadisticas_csv=estadisticas_csv
     )
+@router.get(
+    "/metrica_heatmap",
+    summary="Obtener datos de heatmap para métrica individual",
+    description="Genera datos de heatmap para una métrica específica usando colores violeta-magenta."
+)
+def get_metrica_heatmap(
+    metrica: Literal["DA", "UDI", "sDA", "sUDI", "DAv_zone"] = Query(
+        ...,
+        description="Métrica para la cual generar el heatmap con colores violeta-magenta"
+    )
+):
+    """
+    Obtiene datos de heatmap para una métrica individual con colores del degradé violeta-magenta
+    """
+    try:
+        datos_metrica = luz_service.generar_datos_metrica_individual(metrica)
+        return datos_metrica
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")

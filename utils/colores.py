@@ -240,6 +240,67 @@ def obtener_color_heatmap_normalizado(valor_normalizado: float) -> str:
     return colores_degrade[indice]
 
 
+def obtener_color_metrica_heatmap(metrica: str, valor: float, min_valor: float = None, max_valor: float = None) -> str:
+    """
+    Obtiene color del degradé violeta-magenta para gráficos/heatmaps de métricas individuales.
+
+    Args:
+        metrica: Nombre de la métrica (DA, UDI, sDA, sUDI, DAv_zone)
+        valor: Valor de la métrica en su punto del heatmap
+        min_valor: Valor mínimo del rango (opcional)
+        max_valor: Valor máximo del rango (opcional)
+
+    Returns:
+        String con el color en formato hexadecimal del degradé
+    """
+    # Si no se proporciona rango, usar rangos por defecto de cada métrica
+    if min_valor is None or max_valor is None:
+        rangos_default = {
+            "DA": (0, 100),
+            "UDI": (0, 100),
+            "sDA": (0, 100),
+            "sUDI": (0, 100),
+            "DAv_zone": (0, 100)
+        }
+        min_valor, max_valor = rangos_default.get(metrica.upper(), (0, 100))
+
+    # Normalizar valor al rango 0-100
+    if max_valor == min_valor:
+        valor_normalizado = 50  # Punto medio si no hay rango
+    else:
+        valor_normalizado = ((valor - min_valor) / (max_valor - min_valor)) * 100
+        valor_normalizado = max(0, min(100, valor_normalizado))
+
+    return obtener_color_heatmap_normalizado(valor_normalizado)
+
+
+def generar_colores_metrica_heatmap(metrica: str, valores_metrica: list) -> list:
+    """
+    Genera array de colores del degradé violeta-magenta para gráficos de métricas individuales.
+
+    Args:
+        metrica: Nombre de la métrica (DA, UDI, sDA, sUDI, DAv_zone)
+        valores_metrica: Lista de valores de la métrica
+
+    Returns:
+        Lista de colores hexadecimales del degradé violeta-magenta
+    """
+    if not valores_metrica:
+        return ["#CCCCCC"]
+
+    # Calcular rango real de los datos de la métrica
+    min_valor = min(valores_metrica)
+    max_valor = max(valores_metrica)
+
+    # Generar colores usando el degradé violeta-magenta
+    colores = []
+    for valor in valores_metrica:
+        color = obtener_color_metrica_heatmap(metrica, valor, min_valor, max_valor)
+        colores.append(color)
+
+    return colores
+
+
 def generar_colores_heatmap(heatmap_data: list) -> list:
     """
     Genera array de colores para cada punto del heatmap usando el rango real de datos.
