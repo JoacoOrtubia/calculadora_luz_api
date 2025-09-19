@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Tuple
 from schemas.luz_schemas import VentanaInput, MetricaOutput, PuntoUsado
 from services.data_service import DataService
-from utils.colores import obtener_color_hex, generar_colores_heatmap, generar_colores_metrica_heatmap
+from utils.colores import obtener_color_hex, generar_colores_heatmap, generar_colores_metrica_heatmap, generar_colores_por_rangos
 from utils.orientacion import codificar_orientacion
 
 
@@ -169,6 +169,150 @@ class LuzNaturalService:
             "interpolated": True
         }
 
+    def generar_echarts_heatmap_dav_zone(self, heatmap_data: List) -> Dict:
+        """
+        Genera datos para ECharts heatmap principal usando valores DAv_zone con 21 colores
+
+        Args:
+            heatmap_data: Lista de puntos [area, tv, yhat]
+
+        Returns:
+            Dict con datos de heatmap DAv_zone con colores violeta-magenta
+        """
+        # Configuración de la grilla
+        x_grid_size = 24  # Divisiones en X (área)
+        y_grid_size = 16  # Divisiones en Y (TV)
+
+        x_min, x_max = 0.25, 12.0
+        y_min, y_max = 0.1, 0.9
+
+        x_step = (x_max - x_min) / (x_grid_size - 1)
+        y_step = (y_max - y_min) / (y_grid_size - 1)
+
+        # Generar coordenadas y etiquetas de ejes
+        x_coords = [x_min + i * x_step for i in range(x_grid_size)]
+        y_coords = [y_min + i * y_step for i in range(y_grid_size)]
+
+        x_labels = [f"{x:.1f}" for x in x_coords]
+        y_labels = [f"{y:.2f}" for y in y_coords]
+
+        # Crear diccionario de valores DAv_zone por coordenadas
+        dav_zone_dict = {}
+        for punto in heatmap_data:
+            if len(punto) >= 3:
+                area, tv, yhat = punto[0], punto[1], punto[2]
+                # Calcular DAv_zone desde yhat
+                metricas = self.calcular_metricas_desde_yhat(yhat)
+                dav_zone_value = metricas["DAv_zone"]
+
+                # Encontrar índices más cercanos
+                x_idx = min(range(x_grid_size), key=lambda i: abs(x_coords[i] - area))
+                y_idx = min(range(y_grid_size), key=lambda i: abs(y_coords[i] - tv))
+                dav_zone_dict[(x_idx, y_idx)] = dav_zone_value
+
+        # Interpolar valores faltantes usando nearest neighbor
+        heatmap_grid_data = []
+        for i in range(x_grid_size):
+            for j in range(y_grid_size):
+                if (i, j) in dav_zone_dict:
+                    # Usar valor exacto si existe
+                    valor = dav_zone_dict[(i, j)]
+                else:
+                    # Buscar el punto más cercano con datos
+                    min_dist = float('inf')
+                    valor = 0
+                    for (x_idx, y_idx), dav_value in dav_zone_dict.items():
+                        dist = ((i - x_idx) ** 2 + (j - y_idx) ** 2) ** 0.5
+                        if dist < min_dist:
+                            min_dist = dist
+                            valor = dav_value
+
+                heatmap_grid_data.append([i, j, valor])
+
+        return {
+            "heatmap_data": heatmap_grid_data,
+            "x_labels": x_labels,
+            "y_labels": y_labels,
+            "x_grid_size": x_grid_size,
+            "y_grid_size": y_grid_size,
+            "x_range": {"min": x_min, "max": x_max},
+            "y_range": {"min": y_min, "max": y_max},
+            "metrica": "DAv_zone",
+            "uses_21_colors": True
+        }
+
+    def generar_echarts_heatmap_rangos_discretos(self, heatmap_data: List, valores_metrica: List, metrica: str) -> Dict:
+        """
+        Genera datos para ECharts heatmap con rangos discretos para métricas individuales
+
+        Args:
+            heatmap_data: Lista de puntos [area, tv, yhat]
+            valores_metrica: Lista de valores calculados de la métrica
+            metrica: Nombre de la métrica
+
+        Returns:
+            Dict con datos de heatmap con colores por rangos discretos
+        """
+        # Configuración de la grilla
+        x_grid_size = 24  # Divisiones en X (área)
+        y_grid_size = 16  # Divisiones en Y (TV)
+
+        x_min, x_max = 0.25, 12.0
+        y_min, y_max = 0.1, 0.9
+
+        x_step = (x_max - x_min) / (x_grid_size - 1)
+        y_step = (y_max - y_min) / (y_grid_size - 1)
+
+        # Generar coordenadas y etiquetas de ejes
+        x_coords = [x_min + i * x_step for i in range(x_grid_size)]
+        y_coords = [y_min + i * y_step for i in range(y_grid_size)]
+
+        x_labels = [f"{x:.1f}" for x in x_coords]
+        y_labels = [f"{y:.2f}" for y in y_coords]
+
+        # Crear diccionario de valores de métrica por coordenadas
+        metrica_dict = {}
+        for i, punto in enumerate(heatmap_data):
+            if i < len(valores_metrica) and len(punto) >= 3:
+                area, tv = punto[0], punto[1]
+                valor_metrica = valores_metrica[i]
+
+                # Encontrar índices más cercanos
+                x_idx = min(range(x_grid_size), key=lambda i: abs(x_coords[i] - area))
+                y_idx = min(range(y_grid_size), key=lambda i: abs(y_coords[i] - tv))
+                metrica_dict[(x_idx, y_idx)] = valor_metrica
+
+        # Interpolar valores faltantes usando nearest neighbor
+        heatmap_grid_data = []
+        for i in range(x_grid_size):
+            for j in range(y_grid_size):
+                if (i, j) in metrica_dict:
+                    # Usar valor exacto si existe
+                    valor = metrica_dict[(i, j)]
+                else:
+                    # Buscar el punto más cercano con datos
+                    min_dist = float('inf')
+                    valor = 0
+                    for (x_idx, y_idx), metrica_value in metrica_dict.items():
+                        dist = ((i - x_idx) ** 2 + (j - y_idx) ** 2) ** 0.5
+                        if dist < min_dist:
+                            min_dist = dist
+                            valor = metrica_value
+
+                heatmap_grid_data.append([i, j, valor])
+
+        return {
+            "heatmap_data": heatmap_grid_data,
+            "x_labels": x_labels,
+            "y_labels": y_labels,
+            "x_grid_size": x_grid_size,
+            "y_grid_size": y_grid_size,
+            "x_range": {"min": x_min, "max": x_max},
+            "y_range": {"min": y_min, "max": y_max},
+            "metrica": metrica,
+            "uses_discrete_ranges": True
+        }
+
     def procesar_calculo_luz(self, data: VentanaInput) -> Dict:
         """
         Procesa el cálculo completo de luz natural
@@ -193,8 +337,8 @@ class LuzNaturalService:
         # Generar datos pre-formateados para ECharts (scatter original)
         echarts_data = self.generar_echarts_data(heatmap_data, heatmap_colors)
 
-        # Generar datos para heatmap verdadero con índices de grilla
-        echarts_heatmap = self.generar_echarts_heatmap_data(heatmap_data, heatmap_colors)
+        # Generar datos para heatmap verdadero con índices de grilla (usando DAv_zone)
+        echarts_heatmap = self.generar_echarts_heatmap_dav_zone(heatmap_data)
 
         # Inicializar variables de respuesta
         yhat_pred = None
@@ -251,14 +395,21 @@ class LuzNaturalService:
 
     def generar_datos_metrica_individual(self, metrica: str) -> Dict:
         """
-        Genera datos de heatmap para una métrica individual usando colores violeta-magenta.
+        Genera datos de heatmap para una métrica individual usando rangos discretos.
 
         Args:
-            metrica: Nombre de la métrica (DA, UDI, sDA, sUDI, DAv_zone)
+            metrica: Nombre de la métrica (DA, UDI, sDA, sUDI)
 
         Returns:
-            Dict con datos y colores para la métrica específica
+            Dict con datos y colores para la métrica específica con rangos discretos
         """
+        # Verificar que sea una métrica válida para rangos discretos
+        metricas_validas = ["DA", "UDI", "sDA", "sUDI"]
+        if metrica.upper() not in metricas_validas:
+            return {
+                "error": f"Métrica {metrica} no soportada para rangos discretos"
+            }
+
         # Obtener datos base del heatmap
         heatmap_data = self.data_service.get_heatmap_data()
 
@@ -267,7 +418,7 @@ class LuzNaturalService:
                 "metrica": metrica,
                 "heatmap_data": [],
                 "colores_metrica": [],
-                "echarts_data": [],
+                "echarts_heatmap": [],
                 "error": "No hay datos disponibles"
             }
 
@@ -282,8 +433,8 @@ class LuzNaturalService:
             else:
                 valores_metrica.append(0)
 
-        # Generar colores usando el degradé violeta-magenta
-        colores_metrica = generar_colores_metrica_heatmap(metrica, valores_metrica)
+        # Generar colores usando rangos discretos
+        colores_metrica = generar_colores_por_rangos(metrica, valores_metrica)
 
         # Generar datos pre-formateados para ECharts scatter (original)
         echarts_data = []
@@ -303,8 +454,8 @@ class LuzNaturalService:
                     }
                 })
 
-        # Generar datos para heatmap verdadero con índices de grilla
-        echarts_heatmap = self.generar_echarts_heatmap_data(heatmap_data, colores_metrica)
+        # Generar datos para heatmap verdadero con índices de grilla (rangos discretos)
+        echarts_heatmap = self.generar_echarts_heatmap_rangos_discretos(heatmap_data, valores_metrica, metrica)
 
         return {
             "metrica": metrica,

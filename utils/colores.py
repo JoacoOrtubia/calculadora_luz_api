@@ -341,3 +341,94 @@ def generar_colores_heatmap(heatmap_data: list) -> list:
             colores.append("#CCCCCC")
 
     return colores
+
+
+def obtener_color_por_rango_da(valor: float) -> str:
+    """
+    Obtiene color por rango discreto para métrica DA
+    Basado en la imagen de referencia
+    """
+    if valor < 50:
+        return "#8B4AA0"  # Morado
+    elif 50 <= valor < 60:
+        return "#5A8AC8"  # Azul
+    elif 60 <= valor < 70:
+        return "#5AB8A8"  # Verde/Cian
+    elif 70 <= valor < 80:
+        return "#8BC34A"  # Verde claro
+    elif 80 <= valor < 90:
+        return "#CDDC39"  # Amarillo claro
+    else:  # >= 90
+        return "#FFF176"  # Amarillo
+
+
+def obtener_color_por_rango_udi(valor: float) -> str:
+    """
+    Obtiene color por rango discreto para métrica UDI
+    Similar a DA pero con distribución diferente
+    """
+    if valor < 50:
+        return "#8B4AA0"  # Morado
+    elif 50 <= valor < 60:
+        return "#5A8AC8"  # Azul
+    elif 60 <= valor < 70:
+        return "#5AB8A8"  # Verde/Cian
+    elif 70 <= valor < 80:
+        return "#8BC34A"  # Verde claro
+    elif 80 <= valor < 90:
+        return "#CDDC39"  # Amarillo claro
+    else:  # >= 90
+        return "#FFF176"  # Amarillo
+
+
+def obtener_color_por_rango_sda(valor: float) -> str:
+    """
+    Obtiene color por rango discreto para métrica sDA
+    3 rangos según imagen de referencia
+    """
+    if valor < 55:
+        return "#8B4AA0"  # Morado
+    elif 55 <= valor < 75:
+        return "#26C6DA"  # Cian
+    else:  # >= 75
+        return "#C0E76A"  # Amarillo/Verde
+
+
+def obtener_color_por_rango_sudi(valor: float) -> str:
+    """
+    Obtiene color por rango discreto para métrica sUDI
+    4 zonas + híbrida según imagen de referencia
+    """
+    if valor < 75:
+        return "#8B4AA0"  # Morado
+    elif 75 <= valor < 95:
+        return "#26C6DA"  # Cian
+    elif valor >= 95:
+        return "#C0E76A"  # Amarillo/Verde
+    else:
+        return "#BDBDBD"  # Gris para zona híbrida
+
+
+def generar_colores_por_rangos(metrica: str, valores: list) -> list:
+    """
+    Genera array de colores usando rangos discretos para métricas individuales
+
+    Args:
+        metrica: Nombre de la métrica (DA, UDI, sDA, sUDI)
+        valores: Lista de valores de la métrica
+
+    Returns:
+        Lista de colores según rangos discretos
+    """
+    color_functions = {
+        "DA": obtener_color_por_rango_da,
+        "UDI": obtener_color_por_rango_udi,
+        "sDA": obtener_color_por_rango_sda,
+        "sUDI": obtener_color_por_rango_sudi,
+    }
+
+    color_func = color_functions.get(metrica.upper())
+    if not color_func:
+        return ["#CCCCCC"] * len(valores)
+
+    return [color_func(valor) for valor in valores]
