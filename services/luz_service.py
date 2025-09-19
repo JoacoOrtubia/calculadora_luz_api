@@ -103,14 +103,14 @@ class LuzNaturalService:
 
     def generar_echarts_heatmap_data(self, heatmap_data: List, heatmap_colors: List) -> Dict:
         """
-        Genera datos para ECharts heatmap con índices de grilla y configuración completa
+        Genera datos para ECharts heatmap con grilla completa usando interpolación simple
 
         Args:
             heatmap_data: Lista de puntos [area, tv, yhat]
             heatmap_colors: Lista de colores hexadecimales
 
         Returns:
-            Dict con datos de heatmap, configuración de ejes y grilla
+            Dict con datos de heatmap completo, configuración de ejes y grilla
         """
         # Configuración de la grilla
         x_grid_size = 24  # Divisiones en X (área)
@@ -122,25 +122,41 @@ class LuzNaturalService:
         x_step = (x_max - x_min) / (x_grid_size - 1)
         y_step = (y_max - y_min) / (y_grid_size - 1)
 
-        # Generar etiquetas de ejes
-        x_labels = [f"{(x_min + i * x_step):.1f}" for i in range(x_grid_size)]
-        y_labels = [f"{(y_min + i * y_step):.2f}" for i in range(y_grid_size)]
+        # Generar coordenadas y etiquetas de ejes
+        x_coords = [x_min + i * x_step for i in range(x_grid_size)]
+        y_coords = [y_min + i * y_step for i in range(y_grid_size)]
 
-        # Transformar datos a índices de grilla
-        heatmap_grid_data = []
-        for i, punto in enumerate(heatmap_data):
+        x_labels = [f"{x:.1f}" for x in x_coords]
+        y_labels = [f"{y:.2f}" for y in y_coords]
+
+        # Crear diccionario de datos existentes por coordenadas
+        data_dict = {}
+        for punto in heatmap_data:
             if len(punto) >= 3:
                 area, tv, yhat = punto[0], punto[1], punto[2]
+                # Encontrar índices más cercanos
+                x_idx = min(range(x_grid_size), key=lambda i: abs(x_coords[i] - area))
+                y_idx = min(range(y_grid_size), key=lambda i: abs(y_coords[i] - tv))
+                data_dict[(x_idx, y_idx)] = yhat
 
-                # Convertir coordenadas continuas a índices de grilla
-                x_index = round((area - x_min) / x_step)
-                y_index = round((tv - y_min) / y_step)
+        # Interpolar valores faltantes usando nearest neighbor simple
+        heatmap_grid_data = []
+        for i in range(x_grid_size):
+            for j in range(y_grid_size):
+                if (i, j) in data_dict:
+                    # Usar valor exacto si existe
+                    valor = data_dict[(i, j)]
+                else:
+                    # Buscar el punto más cercano con datos
+                    min_dist = float('inf')
+                    valor = 0
+                    for (x_idx, y_idx), yhat in data_dict.items():
+                        dist = ((i - x_idx) ** 2 + (j - y_idx) ** 2) ** 0.5
+                        if dist < min_dist:
+                            min_dist = dist
+                            valor = yhat
 
-                # Asegurar que estén dentro del rango
-                x_index = max(0, min(x_grid_size - 1, x_index))
-                y_index = max(0, min(y_grid_size - 1, y_index))
-
-                heatmap_grid_data.append([x_index, y_index, yhat])
+                heatmap_grid_data.append([i, j, valor])
 
         return {
             "heatmap_data": heatmap_grid_data,
@@ -149,7 +165,8 @@ class LuzNaturalService:
             "x_grid_size": x_grid_size,
             "y_grid_size": y_grid_size,
             "x_range": {"min": x_min, "max": x_max},
-            "y_range": {"min": y_min, "max": y_max}
+            "y_range": {"min": y_min, "max": y_max},
+            "interpolated": True
         }
 
     def procesar_calculo_luz(self, data: VentanaInput) -> Dict:
