@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Heatmap - Calculadora Luz Natural</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: inline-block;
+            width: 120px;
+            font-weight: bold;
+        }
+        input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 120px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #chart {
+            width: 100%;
+            height: 600px;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .info {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌞 Test Heatmap - Calculadora Luz Natural</h1>
+
+        <div class="form-group">
+            <label>TV (0.1-0.9):</label>
+            <input type="number" id="tv" value="0.5" step="0.1" min="0.1" max="0.9">
+        </div>
+
+        <div class="form-group">
+            <label>Alto (m):</label>
+            <input type="number" id="alto" value="2.5" step="0.1" min="0.5" max="5.0">
+        </div>
+
+        <div class="form-group">
+            <label>Ancho (m):</label>
+            <input type="number" id="ancho" value="3.0" step="0.1" min="0.5" max="8.0">
+        </div>
+
+        <button onclick="calcularLuz()">🔍 Calcular y Mostrar Heatmap</button>
+
+        <div id="status"></div>
+        <div id="chart"></div>
+
+        <div id="debug-info" style="margin-top: 20px; font-size: 12px; color: #666;"></div>
+    </div>
+
+    <script>
+        const API_URL = 'https://calculadora-luznatural-api.onrender.com/api/v1/calcular_luz';
+
+        // Inicializar ECharts
+        const chart = echarts.init(document.getElementById('chart'));
+
+        // Función para mostrar estado
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+
+        // Función para mostrar debug info
+        function showDebugInfo(data) {
+            const debugDiv = document.getElementById('debug-info');
+            const coloresUnicos = [...new Set(data.heatmap_colors)];
+            debugDiv.innerHTML = `
+                <h4>Debug Info:</h4>
+                <p><strong>Total puntos heatmap:</strong> ${data.heatmap_data.length}</p>
+                <p><strong>Total colores:</strong> ${data.heatmap_colors.length}</p>
+                <p><strong>Colores únicos:</strong> ${coloresUnicos.length}</p>
+                <p><strong>Rango valores yhat:</strong> ${Math.min(...data.heatmap_data.map(p => p[2])).toFixed(2)} - ${Math.max(...data.heatmap_data.map(p => p[2])).toFixed(2)}</p>
+                <p><strong>Colores únicos encontrados:</strong></p>
+                <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
+                    ${coloresUnicos.map(color => `<div style="background: ${color}; width: 20px; height: 20px; border: 1px solid #ccc; border-radius: 3px; display: inline-block;" title="${color}"></div>`).join('')}
+                </div>
+            `;
+        }
+
+        async function calcularLuz() {
+            const tv = parseFloat(document.getElementById('tv').value);
+            const alto = parseFloat(document.getElementById('alto').value);
+            const ancho = parseFloat(document.getElementById('ancho').value);
+
+            // Validaciones
+            if (!tv || tv < 0.1 || tv > 0.9) {
+                showStatus('⚠️ TV debe estar entre 0.1 y 0.9', 'error');
+                return;
+            }
+
+            if (!alto || alto < 0.5 || alto > 5.0) {
+                showStatus('⚠️ Alto debe estar entre 0.5 y 5.0 metros', 'error');
+                return;
+            }
+
+            if (!ancho || ancho < 0.5 || ancho > 8.0) {
+                showStatus('⚠️ Ancho debe estar entre 0.5 y 8.0 metros', 'error');
+                return;
+            }
+
+            showStatus('🔄 Consultando API...', 'loading');
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ tv, alto, ancho })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                if (!data.ok) {
+                    throw new Error(data.mensaje || 'Error en la respuesta de la API');
+                }
+
+                showStatus('✅ Datos recibidos correctamente. Renderizando heatmap...', 'info');
+                showDebugInfo(data);
+                renderizarHeatmap(data);
+
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        function renderizarHeatmap(data) {
+            // Preparar datos para ECharts usando los colores exactos del backend
+            const chartData = data.heatmap_data.map((punto, index) => ({
+                value: [punto[0], punto[1], punto[2]], // [x, y, valor]
+                itemStyle: {
+                    color: data.heatmap_colors[index] // Color exacto del backend
+                }
+            }));
+
+            // Encontrar rangos para los ejes
+            const xValues = data.heatmap_data.map(p => p[0]);
+            const yValues = data.heatmap_data.map(p => p[1]);
+            const zValues = data.heatmap_data.map(p => p[2]);
+
+            const xMin = Math.min(...xValues);
+            const xMax = Math.max(...xValues);
+            const yMin = Math.min(...yValues);
+            const yMax = Math.max(...yValues);
+            const zMin = Math.min(...zValues);
+            const zMax = Math.max(...zValues);
+
+            const option = {
+                title: {
+                    text: `Heatmap Luz Natural (TV: ${data.punto_usado.tv}, Área: ${data.punto_usado.area_vidrio}m²)`,
+                    left: 'center',
+                    textStyle: {
+                        fontSize: 16,
+                        fontWeight: 'bold'
+                    }
+                },
+                tooltip: {
+                    position: 'top',
+                    formatter: function(params) {
+                        const [x, y, value] = params.value;
+                        const color = params.data.itemStyle.color;
+                        return `
+                            <div style="text-align: left;">
+                                <strong>Área vidrio:</strong> ${x.toFixed(2)} m²<br/>
+                                <strong>TV:</strong> ${y.toFixed(1)}<br/>
+                                <strong>Valor yhat:</strong> ${value.toFixed(2)}<br/>
+                                <strong>Color:</strong> <span style="background: ${color}; padding: 2px 6px; color: white; border-radius: 3px;">${color}</span>
+                            </div>
+                        `;
+                    }
+                },
+                xAxis: {
+                    type: 'value',
+                    name: 'Área de vidrio (m²)',
+                    nameLocation: 'center',
+                    nameGap: 30,
+                    min: xMin,
+                    max: xMax,
+                    splitLine: {
+                        lineStyle: {
+                            color: '#ddd'
+                        }
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'Transmitancia Visible (TV)',
+                    nameLocation: 'center',
+                    nameGap: 40,
+                    min: yMin,
+                    max: yMax,
+                    splitLine: {
+                        lineStyle: {
+                            color: '#ddd'
+                        }
+                    }
+                },
+                series: [{
+                    name: 'Luz Natural',
+                    type: 'heatmap',
+                    data: chartData,
+                    emphasis: {
+                        itemStyle: {
+                            borderColor: '#333',
+                            borderWidth: 2
+                        }
+                    },
+                    progressive: 1000,
+                    animation: false
+                }]
+            };
+
+            chart.setOption(option);
+            showStatus(`✅ Heatmap renderizado con ${data.heatmap_colors.length} colores únicos`, 'info');
+        }
+
+        // Calcular automáticamente al cargar
+        window.onload = function() {
+            calcularLuz();
+        };
+
+        // Redimensionar chart al cambiar ventana
+        window.addEventListener('resize', function() {
+            chart.resize();
+        });
+    </script>
+</body>
+</html>

@@ -101,6 +101,57 @@ class LuzNaturalService:
 
         return echarts_data
 
+    def generar_echarts_heatmap_data(self, heatmap_data: List, heatmap_colors: List) -> Dict:
+        """
+        Genera datos para ECharts heatmap con índices de grilla y configuración completa
+
+        Args:
+            heatmap_data: Lista de puntos [area, tv, yhat]
+            heatmap_colors: Lista de colores hexadecimales
+
+        Returns:
+            Dict con datos de heatmap, configuración de ejes y grilla
+        """
+        # Configuración de la grilla
+        x_grid_size = 24  # Divisiones en X (área)
+        y_grid_size = 16  # Divisiones en Y (TV)
+
+        x_min, x_max = 0.25, 12.0
+        y_min, y_max = 0.1, 0.9
+
+        x_step = (x_max - x_min) / (x_grid_size - 1)
+        y_step = (y_max - y_min) / (y_grid_size - 1)
+
+        # Generar etiquetas de ejes
+        x_labels = [f"{(x_min + i * x_step):.1f}" for i in range(x_grid_size)]
+        y_labels = [f"{(y_min + i * y_step):.2f}" for i in range(y_grid_size)]
+
+        # Transformar datos a índices de grilla
+        heatmap_grid_data = []
+        for i, punto in enumerate(heatmap_data):
+            if len(punto) >= 3:
+                area, tv, yhat = punto[0], punto[1], punto[2]
+
+                # Convertir coordenadas continuas a índices de grilla
+                x_index = round((area - x_min) / x_step)
+                y_index = round((tv - y_min) / y_step)
+
+                # Asegurar que estén dentro del rango
+                x_index = max(0, min(x_grid_size - 1, x_index))
+                y_index = max(0, min(y_grid_size - 1, y_index))
+
+                heatmap_grid_data.append([x_index, y_index, yhat])
+
+        return {
+            "heatmap_data": heatmap_grid_data,
+            "x_labels": x_labels,
+            "y_labels": y_labels,
+            "x_grid_size": x_grid_size,
+            "y_grid_size": y_grid_size,
+            "x_range": {"min": x_min, "max": x_max},
+            "y_range": {"min": y_min, "max": y_max}
+        }
+
     def procesar_calculo_luz(self, data: VentanaInput) -> Dict:
         """
         Procesa el cálculo completo de luz natural
@@ -122,8 +173,11 @@ class LuzNaturalService:
         # Generar colores para el heatmap
         heatmap_colors = generar_colores_heatmap(heatmap_data)
 
-        # Generar datos pre-formateados para ECharts
+        # Generar datos pre-formateados para ECharts (scatter original)
         echarts_data = self.generar_echarts_data(heatmap_data, heatmap_colors)
+
+        # Generar datos para heatmap verdadero con índices de grilla
+        echarts_heatmap = self.generar_echarts_heatmap_data(heatmap_data, heatmap_colors)
 
         # Inicializar variables de respuesta
         yhat_pred = None
@@ -168,7 +222,8 @@ class LuzNaturalService:
             "punto_usado": punto_usado.dict() if punto_usado else None,
             "heatmap_data": heatmap_data,
             "heatmap_colors": heatmap_colors,
-            "echarts_data": echarts_data,  # NUEVO: Datos listos para ECharts
+            "echarts_data": echarts_data,  # Datos scatter originales
+            "echarts_heatmap": echarts_heatmap,  # NUEVO: Datos para heatmap verdadero
             "metrics": [metric.dict() for metric in metrics],
             "energia_pct": energia_pct,
             "orientacion_texto": data.orientation,
@@ -213,7 +268,7 @@ class LuzNaturalService:
         # Generar colores usando el degradé violeta-magenta
         colores_metrica = generar_colores_metrica_heatmap(metrica, valores_metrica)
 
-        # Generar datos pre-formateados para ECharts con colores de la métrica
+        # Generar datos pre-formateados para ECharts scatter (original)
         echarts_data = []
         for i, punto in enumerate(heatmap_data):
             if i < len(valores_metrica) and i < len(colores_metrica):
@@ -231,12 +286,16 @@ class LuzNaturalService:
                     }
                 })
 
+        # Generar datos para heatmap verdadero con índices de grilla
+        echarts_heatmap = self.generar_echarts_heatmap_data(heatmap_data, colores_metrica)
+
         return {
             "metrica": metrica,
             "heatmap_data": heatmap_data,
             "valores_metrica": valores_metrica,
             "colores_metrica": colores_metrica,
-            "echarts_data": echarts_data,
+            "echarts_data": echarts_data,  # Datos scatter originales
+            "echarts_heatmap": echarts_heatmap,  # NUEVO: Datos para heatmap verdadero
             "rango_valores": {
                 "min": min(valores_metrica) if valores_metrica else 0,
                 "max": max(valores_metrica) if valores_metrica else 0
