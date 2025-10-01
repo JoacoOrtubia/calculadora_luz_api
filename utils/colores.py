@@ -144,17 +144,30 @@ def get_color_legend(metrica: str) -> dict:
     return legends.get(metrica, [])
 
 
-# Funciones adicionales para heatmaps (si existen en el archivo original)
-def generar_colores_heatmap():
-    """Función adicional para heatmaps si existe"""
-    pass
+def generar_colores_por_rangos(metrica: str, valores: list) -> list:
+    """
+    Genera array de colores usando rangos discretos para métricas individuales
+
+    Args:
+        metrica: Nombre de la métrica (DA, UDI, sDA, sUDI)
+        valores: Lista de valores de la métrica
+
+    Returns:
+        Lista de colores según rangos discretos
+    """
+    colores = []
+    for valor in valores:
+        color = obtener_color_hex(metrica, valor)
+        colores.append(color)
+    return colores
 
 
-def generar_colores_metrica_heatmap():
-    """Función adicional para métricas heatmap si existe"""
-    pass
+def generar_colores_metrica_heatmap(metrica: str, valores: list) -> list:
+    """Genera colores específicos para heatmap de métricas"""
+    return generar_colores_por_rangos(metrica, valores)
 
 
-def generar_colores_por_rangos():
-    """Función adicional para colores por rangos si existe"""
-    pass
+def generar_colores_heatmap(valores: list) -> list:
+    """Genera colores para heatmap general"""
+    # Usar una métrica por defecto o colores graduales
+    return ["#735FF1"] * len(valores)
