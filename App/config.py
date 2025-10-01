@@ -14,6 +14,7 @@ class Settings:
     allowed_origins: List[str] = [
         "http://localhost:3000",
         "http://localhost:5173",
+        "https://preview--luz-natural-lab-13791.lovable.app",
         "https://*.lovableproject.com",
         "https://lovableproject.com",
         "https://*.lovable.app",
