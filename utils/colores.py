@@ -48,13 +48,15 @@ def obtener_color_sda(percent: float) -> str:
 
 def obtener_color_sudi(percent: float) -> str:
     """Color para métrica sUDI (Spatial Useful Daylight Illuminance) - Métricas Espaciales"""
-    if percent < 75:
+    if percent >= 99:  # Hybrid zone (usar valor especial 99+)
+        return "#D5D5D5"  # Gris - Hybrid zone
+    elif percent < 75:
         return "#31ADD7"  # Turquesa - < 75%
     elif 75 <= percent < 95:
         return "#F74A87"  # Rosa - [75%, 95%)
     elif percent >= 95:
         return "#DA3AB4"  # Magenta oscuro - >= 95%
-    return "#D5D5D5"  # Gris - Hybrid zone
+    return "#D5D5D5"  # Gris - Fallback
 
 
 def obtener_color_dav_zone(percent: float) -> str:
