@@ -28,7 +28,7 @@ app.add_middleware(
         "https://lovableproject.com",
         "https://lovable.app"
     ],
-    allow_origin_regex=r"https://.*\.lovableproject\.com|https://.*\.lovable\.app",
+    allow_origin_regex=r"https://.*\.lovable\.app",
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
