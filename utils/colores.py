@@ -7,49 +7,49 @@ Cada métrica tiene su propia paleta de colores basada en rangos específicos.
 def obtener_color_da(percent: float) -> str:
     """Color para métrica DA (Daylight Autonomy) - Métricas Temporales"""
     if percent < 50:
-        return "#3C8EEA"  # Azul - < 50%
+        return "#735FF1"  # Violeta - < 50%
     elif 50 <= percent < 60:
-        return "#75D766"  # Verde - [50%, 60%)
+        return "#339CE5"  # Azul - [50%, 60%)
     elif 60 <= percent < 70:
-        return "#C8A443"  # Amarillo - [60%, 70%)
+        return "#42DA97"  # Verde - [60%, 70%)
     elif 70 <= percent < 80:
-        return "#E07060"  # Naranja - [70%, 80%)
+        return "#9EB054"  # Amarillo-verde - [70%, 80%)
     elif 80 <= percent < 90:
-        return "#E74487"  # Rosa - [80%, 90%)
+        return "#C8A443"  # Amarillo - [80%, 90%)
     else:  # >= 90
-        return "#DA3DA5"  # Magenta - >= 90%
+        return "#E74487"  # Magenta - >= 90%
 
 
 def obtener_color_udi(percent: float) -> str:
     """Color para métrica UDI (Useful Daylight Illuminance) - Métricas Temporales"""
     if percent < 50:
-        return "#3C8EEA"  # Azul - < 50%
+        return "#735FF1"  # Violeta - < 50%
     elif 50 <= percent < 60:
-        return "#75D766"  # Verde - [50%, 60%)
+        return "#339CE5"  # Azul - [50%, 60%)
     elif 60 <= percent < 70:
-        return "#C8A443"  # Amarillo - [60%, 70%)
+        return "#42DA97"  # Verde - [60%, 70%)
     elif 70 <= percent < 80:
-        return "#E07060"  # Naranja - [70%, 80%)
+        return "#9EB054"  # Amarillo-verde - [70%, 80%)
     elif 80 <= percent < 90:
-        return "#E74487"  # Rosa - [80%, 90%)
+        return "#C8A443"  # Amarillo - [80%, 90%)
     else:  # >= 90
-        return "#DA3DA5"  # Magenta - >= 90%
+        return "#E74487"  # Magenta - >= 90%
 
 
 def obtener_color_sda(percent: float) -> str:
     """Color para métrica sDA (Spatial Daylight Autonomy) - Métricas Espaciales"""
     if percent < 55:
-        return "#3C8EEA"  # Azul - < 55%
+        return "#735FF1"  # Violeta - < 55%
     elif 55 <= percent < 75:
-        return "#C8A443"  # Amarillo - [55%, 75%)
+        return "#42DA97"  # Verde - [55%, 75%)
     else:  # >= 75
-        return "#E04196"  # Magenta - >= 75%
+        return "#C8A443"  # Amarillo - >= 75%
 
 
 def obtener_color_sudi(percent: float) -> str:
     """Color para métrica sUDI (Spatial Useful Daylight Illuminance) - Métricas Espaciales"""
     if percent < 75:
-        return "#31ADD7"  # Turquesa - < 75%
+        return "#735FF1"  # Violeta - < 75%
     elif 75 <= percent < 95:
         return "#E74487"  # Magenta - [75%, 95%)
     elif percent >= 95:
@@ -60,11 +60,12 @@ def obtener_color_sudi(percent: float) -> str:
 def obtener_color_dav_zone(percent: float) -> str:
     """Color para métrica DAv_zone (zonas de disponibilidad)"""
     # Availability zones basadas en el gráfico de referencia
-    if percent < 33.33:  # Zona 1
-        return "#9EB054"  # Verde lima - Availability 1
-    elif 33.33 <= percent < 66.66:  # Zona 2
+    # Usar gradiente continuo de verde claro a verde oscuro
+    if percent < 50:  # Availability 1
+        return "#B8D68B"  # Verde claro - Availability 1
+    elif 50 <= percent < 75:  # Availability 2
         return "#42DA97"  # Verde - Availability 2
-    else:  # Zona 3
+    else:  # Conditional availability
         return "#D5D5D5"  # Gris - Conditional availability
 
 
@@ -130,12 +131,12 @@ def get_color_legend(metrica: str) -> dict:
         ],
         "sUDI": [
             {"rango": "< 75%", "color": "#735FF1", "descripcion": "Insuficiente"},
-            {"rango": "[75%, 95%)", "color": "#42DA97", "descripcion": "Aceptable"},
-            {"rango": ">= 95%", "color": "#C8A443", "descripcion": "Excesivo"},
+            {"rango": "[75%, 95%)", "color": "#E74487", "descripcion": "Aceptable"},
+            {"rango": ">= 95%", "color": "#D33AB4", "descripcion": "Excesivo"},
             {"rango": "Hybrid zone", "color": "#D5D5D5", "descripcion": "Zona híbrida"}
         ],
         "DAv_zone": [
-            {"rango": "Availability 1", "color": "#9EB054", "descripcion": "Disponibilidad 1"},
+            {"rango": "Availability 1", "color": "#B8D68B", "descripcion": "Disponibilidad 1"},
             {"rango": "Availability 2", "color": "#42DA97", "descripcion": "Disponibilidad 2"},
             {"rango": "Conditional availability", "color": "#D5D5D5", "descripcion": "Disponibilidad condicional"}
         ]
