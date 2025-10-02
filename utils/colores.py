@@ -7,66 +7,65 @@ Cada métrica tiene su propia paleta de colores basada en rangos específicos.
 def obtener_color_da(percent: float) -> str:
     """Color para métrica DA (Daylight Autonomy) - Métricas Temporales"""
     if percent < 50:
-        return "#735FF1"  # Violeta - < 50%
+        return "#3C8EEA"  # Azul - < 50%
     elif 50 <= percent < 60:
-        return "#339CE5"  # Azul - [50%, 60%)
+        return "#75D766"  # Verde - [50%, 60%)
     elif 60 <= percent < 70:
-        return "#42DA97"  # Verde - [60%, 70%)
+        return "#C8A443"  # Amarillo - [60%, 70%)
     elif 70 <= percent < 80:
-        return "#9EB054"  # Amarillo-verde - [70%, 80%)
+        return "#E07060"  # Naranja - [70%, 80%)
     elif 80 <= percent < 90:
-        return "#C8A443"  # Amarillo - [80%, 90%)
+        return "#F74A87"  # Rosa - [80%, 90%)
     else:  # >= 90
-        return "#E74487"  # Magenta - >= 90%
+        return "#DA3DA5"  # Magenta - >= 90%
 
 
 def obtener_color_udi(percent: float) -> str:
     """Color para métrica UDI (Useful Daylight Illuminance) - Métricas Temporales"""
     if percent < 50:
-        return "#735FF1"  # Violeta - < 50%
+        return "#3C8EEA"  # Azul - < 50%
     elif 50 <= percent < 60:
-        return "#339CE5"  # Azul - [50%, 60%)
+        return "#75D766"  # Verde - [50%, 60%)
     elif 60 <= percent < 70:
-        return "#42DA97"  # Verde - [60%, 70%)
+        return "#C8A443"  # Amarillo - [60%, 70%)
     elif 70 <= percent < 80:
-        return "#9EB054"  # Amarillo-verde - [70%, 80%)
+        return "#E07060"  # Naranja - [70%, 80%)
     elif 80 <= percent < 90:
-        return "#C8A443"  # Amarillo - [80%, 90%)
+        return "#F74A87"  # Rosa - [80%, 90%)
     else:  # >= 90
-        return "#E74487"  # Magenta - >= 90%
+        return "#DA3DA5"  # Magenta - >= 90%
 
 
 def obtener_color_sda(percent: float) -> str:
     """Color para métrica sDA (Spatial Daylight Autonomy) - Métricas Espaciales"""
     if percent < 55:
-        return "#735FF1"  # Violeta - < 55%
+        return "#3C8EEA"  # Azul - < 55%
     elif 55 <= percent < 75:
-        return "#42DA97"  # Verde - [55%, 75%)
+        return "#C8A443"  # Amarillo - [55%, 75%)
     else:  # >= 75
-        return "#C8A443"  # Amarillo - >= 75%
+        return "#E04196"  # Magenta - >= 75%
 
 
 def obtener_color_sudi(percent: float) -> str:
     """Color para métrica sUDI (Spatial Useful Daylight Illuminance) - Métricas Espaciales"""
     if percent < 75:
-        return "#735FF1"  # Violeta - < 75%
+        return "#31ADD7"  # Turquesa - < 75%
     elif 75 <= percent < 95:
-        return "#E74487"  # Magenta - [75%, 95%)
+        return "#F74A87"  # Rosa - [75%, 95%)
     elif percent >= 95:
-        return "#D33AB4"  # Magenta oscuro - >= 95%
+        return "#DA3AB4"  # Magenta oscuro - >= 95%
     return "#D5D5D5"  # Gris - Hybrid zone
 
 
 def obtener_color_dav_zone(percent: float) -> str:
     """Color para métrica DAv_zone (zonas de disponibilidad)"""
-    # Availability zones basadas en el gráfico de referencia
-    # Usar gradiente continuo de verde claro a verde oscuro
+    # Availability zones basadas en el código original del cliente
     if percent < 50:  # Availability 1
-        return "#B8D68B"  # Verde claro - Availability 1
-    elif 50 <= percent < 75:  # Availability 2
-        return "#42DA97"  # Verde - Availability 2
-    else:  # Conditional availability
-        return "#D5D5D5"  # Gris - Conditional availability
+        return "#a1c781"  # Verde claro - Availability 1
+    elif 50 <= percent < 70:  # Availability 2
+        return "#81C784"  # Verde - Availability 2
+    else:  # Conditional availability (>= 70)
+        return "#d3d3d3"  # Gris - Conditional availability
 
 
 def obtener_color_hex(metrica: str, porcentaje: float) -> str:
@@ -109,36 +108,36 @@ def get_color_legend(metrica: str) -> dict:
     """
     legends = {
         "DA": [
-            {"rango": "< 50%", "color": "#735FF1", "descripcion": "Insuficiente"},
-            {"rango": "[50%, 60%)", "color": "#339CE5", "descripcion": "Aceptable"},
-            {"rango": "[60%, 70%)", "color": "#42DA97", "descripcion": "Bueno"},
-            {"rango": "[70%, 80%)", "color": "#9EB054", "descripcion": "Muy bueno"},
-            {"rango": "[80%, 90%)", "color": "#C8A443", "descripcion": "Excelente"},
-            {"rango": ">= 90%", "color": "#E74487", "descripcion": "Excesivo"}
+            {"rango": "< 50%", "color": "#3C8EEA", "descripcion": "Insuficiente"},
+            {"rango": "[50%, 60%)", "color": "#75D766", "descripcion": "Aceptable"},
+            {"rango": "[60%, 70%)", "color": "#C8A443", "descripcion": "Bueno"},
+            {"rango": "[70%, 80%)", "color": "#E07060", "descripcion": "Muy bueno"},
+            {"rango": "[80%, 90%)", "color": "#F74A87", "descripcion": "Excelente"},
+            {"rango": ">= 90%", "color": "#DA3DA5", "descripcion": "Excesivo"}
         ],
         "UDI": [
-            {"rango": "< 50%", "color": "#735FF1", "descripcion": "Insuficiente"},
-            {"rango": "[50%, 60%)", "color": "#339CE5", "descripcion": "Aceptable"},
-            {"rango": "[60%, 70%)", "color": "#42DA97", "descripcion": "Bueno"},
-            {"rango": "[70%, 80%)", "color": "#9EB054", "descripcion": "Muy bueno"},
-            {"rango": "[80%, 90%)", "color": "#C8A443", "descripcion": "Excelente"},
-            {"rango": ">= 90%", "color": "#E74487", "descripcion": "Excesivo"}
+            {"rango": "< 50%", "color": "#3C8EEA", "descripcion": "Insuficiente"},
+            {"rango": "[50%, 60%)", "color": "#75D766", "descripcion": "Aceptable"},
+            {"rango": "[60%, 70%)", "color": "#C8A443", "descripcion": "Bueno"},
+            {"rango": "[70%, 80%)", "color": "#E07060", "descripcion": "Muy bueno"},
+            {"rango": "[80%, 90%)", "color": "#F74A87", "descripcion": "Excelente"},
+            {"rango": ">= 90%", "color": "#DA3DA5", "descripcion": "Excesivo"}
         ],
         "sDA": [
-            {"rango": "< 55%", "color": "#735FF1", "descripcion": "Insuficiente"},
-            {"rango": "[55%, 75%)", "color": "#42DA97", "descripcion": "Aceptable"},
-            {"rango": ">= 75%", "color": "#C8A443", "descripcion": "Óptimo"}
+            {"rango": "< 55%", "color": "#3C8EEA", "descripcion": "Insuficiente"},
+            {"rango": "[55%, 75%)", "color": "#C8A443", "descripcion": "Aceptable"},
+            {"rango": ">= 75%", "color": "#E04196", "descripcion": "Óptimo"}
         ],
         "sUDI": [
-            {"rango": "< 75%", "color": "#735FF1", "descripcion": "Insuficiente"},
-            {"rango": "[75%, 95%)", "color": "#E74487", "descripcion": "Aceptable"},
-            {"rango": ">= 95%", "color": "#D33AB4", "descripcion": "Excesivo"},
+            {"rango": "< 75%", "color": "#31ADD7", "descripcion": "Insuficiente"},
+            {"rango": "[75%, 95%)", "color": "#F74A87", "descripcion": "Aceptable"},
+            {"rango": ">= 95%", "color": "#DA3AB4", "descripcion": "Excesivo"},
             {"rango": "Hybrid zone", "color": "#D5D5D5", "descripcion": "Zona híbrida"}
         ],
         "DAv_zone": [
-            {"rango": "Availability 1", "color": "#B8D68B", "descripcion": "Disponibilidad 1"},
-            {"rango": "Availability 2", "color": "#42DA97", "descripcion": "Disponibilidad 2"},
-            {"rango": "Conditional availability", "color": "#D5D5D5", "descripcion": "Disponibilidad condicional"}
+            {"rango": "Availability 1", "color": "#a1c781", "descripcion": "Disponibilidad 1"},
+            {"rango": "Availability 2", "color": "#81C784", "descripcion": "Disponibilidad 2"},
+            {"rango": "Conditional availability", "color": "#d3d3d3", "descripcion": "Disponibilidad condicional"}
         ]
     }
 
