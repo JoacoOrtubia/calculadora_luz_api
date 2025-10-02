@@ -180,3 +180,27 @@ def get_metrica_heatmap(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+
+
+@router.get(
+    "/metrica_poligonal",
+    summary="Obtener zonas poligonales para métrica",
+    description="Genera zonas poligonales exactas según especificación del cliente (model_graph-area.py)"
+)
+def get_metrica_poligonal(
+    metrica: Literal["DA", "UDI", "sDA", "sUDI", "DAv_zone"] = Query(
+        ...,
+        description="Métrica para la cual obtener zonas poligonales"
+    )
+):
+    """
+    Obtiene zonas poligonales exactas para una métrica con colores según especificación
+    """
+    try:
+        datos_poligonales = luz_service.generar_datos_metrica_poligonal(metrica)
+        return datos_poligonales
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")

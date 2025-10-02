@@ -3,6 +3,7 @@ from schemas.luz_schemas import VentanaInput, MetricaOutput, PuntoUsado
 from services.data_service import DataService
 from utils.colores import obtener_color_hex, generar_colores_heatmap, generar_colores_metrica_heatmap, generar_colores_por_rangos
 from utils.orientacion import codificar_orientacion
+from utils.zonas_poligonales import get_zones_by_metric
 
 
 class LuzNaturalService:
@@ -474,4 +475,29 @@ class LuzNaturalService:
                 "min": min(valores_metrica) if valores_metrica else 0,
                 "max": max(valores_metrica) if valores_metrica else 0
             }
+        }
+
+    def generar_datos_metrica_poligonal(self, metrica: str) -> Dict:
+        """
+        Genera datos usando zonas poligonales exactas del cliente
+
+        Args:
+            metrica: Nombre de la métrica (DA, UDI, sDA, sUDI, DAv_zone)
+
+        Returns:
+            Dict con zonas poligonales y colores
+        """
+        # Obtener zonas poligonales para la métrica
+        zones = get_zones_by_metric(metrica)
+
+        if not zones:
+            return {
+                "error": f"No hay zonas definidas para la métrica {metrica}"
+            }
+
+        return {
+            "metrica": metrica,
+            "zones": zones,
+            "x_range": {"min": 0.25, "max": 12.0},
+            "y_range": {"min": 0.1, "max": 0.9}
         }
