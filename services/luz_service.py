@@ -282,8 +282,9 @@ class LuzNaturalService:
                 y_idx = min(range(y_grid_size), key=lambda i: abs(y_coords[i] - tv))
                 metrica_dict[(x_idx, y_idx)] = valor_metrica
 
-        # Interpolar valores faltantes usando nearest neighbor
+        # Interpolar valores faltantes usando nearest neighbor y generar colores
         heatmap_grid_data = []
+        colores_grid = []
         for i in range(x_grid_size):
             for j in range(y_grid_size):
                 if (i, j) in metrica_dict:
@@ -300,9 +301,14 @@ class LuzNaturalService:
                             valor = metrica_value
 
                 heatmap_grid_data.append([i, j, valor])
+                # Generar color para este valor usando función de colores
+                from utils.colores import obtener_color_hex
+                color = obtener_color_hex(metrica, valor)
+                colores_grid.append(color)
 
         return {
             "heatmap_data": heatmap_grid_data,
+            "colores_metrica": colores_grid,
             "x_labels": x_labels,
             "y_labels": y_labels,
             "x_grid_size": x_grid_size,
