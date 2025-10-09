@@ -137,9 +137,9 @@ def get_color_legend(metrica: str) -> dict:
             {"rango": "Hybrid zone", "color": "#D5D5D5", "descripcion": "Zona híbrida"}
         ],
         "DAv_zone": [
-            {"rango": "Availability 1", "color": "#a1c781", "descripcion": "Disponibilidad 1"},
-            {"rango": "Availability 2", "color": "#81C784", "descripcion": "Disponibilidad 2"},
-            {"rango": "Conditional availability", "color": "#d3d3d3", "descripcion": "Disponibilidad condicional"}
+            {"rango": "Disponibilidad 1", "color": "#a1c781", "descripcion": "Disponibilidad 1"},
+            {"rango": "Disponibilidad 2", "color": "#81C784", "descripcion": "Disponibilidad 2"},
+            {"rango": "Disponibilidad condicional", "color": "#d3d3d3", "descripcion": "Disponibilidad condicional"}
         ]
     }
 
