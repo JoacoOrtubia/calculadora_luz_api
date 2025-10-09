@@ -10,6 +10,7 @@ from schemas.luz_schemas import (
 from services.luz_service import LuzNaturalService
 from services.data_service import DataService
 from utils.orientacion import obtener_orientaciones_disponibles
+from utils.colores import get_color_legend
 
 # Crear router
 router = APIRouter(tags=["Cálculo de Luz Natural"])
@@ -202,5 +203,47 @@ def get_metrica_poligonal(
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+
+
+@router.get(
+    "/leyenda_colores/{metrica}",
+    summary="Obtener leyenda de colores para métrica",
+    description="""
+    Devuelve la leyenda de colores (colorbar) para una métrica específica.
+
+    La leyenda incluye:
+    - **rango**: Rango de valores (ej: "< 50%", "[50%, 60%)")
+    - **color**: Color hexadecimal (ej: "#3C8EEA")
+    - **descripcion**: Descripción del rango (ej: "Insuficiente", "Aceptable")
+
+    Útil para mostrar una colorbar horizontal/vertical en el frontend.
+    """
+)
+def get_leyenda_colores(
+    metrica: Literal["DA", "UDI", "sDA", "sUDI", "DAv_zone"] = Query(
+        ...,
+        description="Métrica para la cual obtener la leyenda de colores"
+    )
+):
+    """
+    Obtiene la leyenda de colores (colorbar) para una métrica específica
+    """
+    try:
+        leyenda = get_color_legend(metrica)
+
+        if not leyenda:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No se encontró leyenda para la métrica: {metrica}"
+            )
+
+        return {
+            "metrica": metrica,
+            "leyenda": leyenda,
+            "descripcion": f"Leyenda de colores para {metrica}"
+        }
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
