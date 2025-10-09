@@ -222,10 +222,7 @@ def get_metrica_poligonal(
     """
 )
 def get_leyenda_colores(
-    metrica: Literal["DA", "UDI", "sDA", "sUDI", "DAv_zone"] = Query(
-        ...,
-        description="Métrica para la cual obtener la leyenda de colores"
-    )
+    metrica: Literal["DA", "UDI", "sDA", "sUDI", "DAv_zone"]
 ):
     """
     Obtiene la leyenda de colores (colorbar) para una métrica específica
